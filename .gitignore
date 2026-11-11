@@ -24,3 +24,10 @@ research/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Local Go toolchain and build outputs
+.tools/
+*.test
+coverage.out
+/OpenPixelBar.exe
+/openpixelbar
