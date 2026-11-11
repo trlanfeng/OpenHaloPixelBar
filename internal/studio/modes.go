@@ -37,6 +37,7 @@ type modes struct {
 	colorError              string
 	currentColor            pixelbar.RGB
 	red, green, blue        float64
+	palette                 colorPaletteState
 }
 
 func (a *App) initModes() {
@@ -223,7 +224,7 @@ func (a *App) writeColor() {
 func (a *App) colorEditor(c *ui.Context) {
 	ui.Scroll(c).Grow(1).Padding(28).Gap(18).Children(func() {
 		ui.Text(c, "像素屏颜色").FontSize(25).Bold()
-		ui.Text(c, "设置整块像素屏的统一颜色，图片和文字共用。调整滑块后点击“应用颜色到音箱”。").TextColor(muted)
+		ui.Text(c, "设置整块像素屏的统一颜色，图片和文字共用。调色板与 RGB 双向同步，选好后点击“应用颜色到音箱”。").TextColor(muted)
 		ui.Row(c).Gap(24).AlignItems(ui.Stretch).Children(func() {
 			ui.Column(c).Width(340).Gap(16).Padding(22).Background(surface).Radius(12).Children(func() {
 				for _, channel := range []struct {
@@ -252,10 +253,8 @@ func (a *App) colorEditor(c *ui.Context) {
 					a.applyReadColor(a.currentColor, nil)
 				}
 			})
-			ui.Column(c).Grow(1).MinWidth(0).Gap(16).Padding(24).Background(surface).Radius(12).Children(func() {
-				col := pixelbar.RGB{R: byte(a.red), G: byte(a.green), B: byte(a.blue)}
-				ui.Text(c, "待应用颜色  "+col.Hex()).Bold()
-				ui.Box(c).FillWidth().Height(120).Radius(10).Background(ui.RGB(col.R, col.G, col.B))
+			ui.Column(c).Grow(1).MinWidth(0).Gap(12).Padding(20).Background(surface).Radius(12).Children(func() {
+				a.colorPalette(c)
 				ui.Text(c, a.colorPreviewLabel()).TextColor(muted)
 				if a.colorKnown {
 					ui.Box(c).FillWidth().Height(24).Radius(5).Background(a.previewColor)
