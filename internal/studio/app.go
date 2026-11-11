@@ -31,6 +31,7 @@ type settings struct {
 	Speed          string
 }
 type App struct {
+	modes
 	window                         *mygo.Window
 	items                          []*item
 	selected                       int
@@ -63,6 +64,7 @@ var appIcon, _ = ui.DecodeBitmap(branding.IconPNG)
 
 func New() *App {
 	a := &App{playing: true, status: "选择素材，调整预览，然后发送到音箱。", previewColor: ui.RGB(255, 200, 111), options: settings{Threshold: 128, Fit: "完整显示", Speed: "原速"}}
+	a.initModes()
 	car, _ := pixelbar.Decode(carGIF)
 	a.items = []*item{{Name: "公路旅行", Detail: "内置动画 · 8 帧", Asset: car}, {Name: "Hello, PixelBar", Detail: "内置图案 · 静态", Asset: pixelbar.Demo()}}
 	if dir, e := os.UserConfigDir(); e == nil {
@@ -225,6 +227,7 @@ func (a *App) loadPath(path string) {
 		it.Asset = asset
 		it.Detail = fmt.Sprintf("%d × %d · %d 帧", asset.Width, asset.Height, len(asset.Frames))
 		a.selected = index
+		a.mode = imageMode
 		a.importOpen = false
 		a.importError = ""
 		a.help = false
@@ -253,7 +256,7 @@ func (a *App) connect(upload bool) {
 		a.checkDevice(time.Now())
 		return
 	}
-	if a.busy || a.processing || a.checking {
+	if a.busy || a.processing || a.checking || !a.canSend() {
 		return
 	}
 	a.busy = true
@@ -280,8 +283,10 @@ func (a *App) connect(upload bool) {
 				})
 			})
 		}
+		col, colorErr := d.ScreenColor()
 		_ = d.Close()
 		a.update(func() {
+			a.applyReadColor(col, colorErr)
 			a.deviceResult(e, time.Now())
 			message := "已检测到 Halo PixelBar · 固件 1.1.1"
 			if upload {
@@ -292,7 +297,7 @@ func (a *App) connect(upload bool) {
 	}()
 }
 func (a *App) export() {
-	if a.busy || a.processing {
+	if a.busy || a.processing || !a.canSend() {
 		return
 	}
 	a.busy = true
@@ -305,6 +310,9 @@ func (a *App) export() {
 		ext = "gif"
 	}
 	name := strings.TrimSuffix(a.items[a.selected].Name, filepath.Ext(a.items[a.selected].Name)) + "-pixelbar." + ext
+	if a.mode == textMode {
+		name = "文字-pixelbar." + ext
+	}
 	go func() {
 		path, e := mygo.Dialog.Save(mygo.SaveDialogOptions{Parent: a.window, Title: "导出点阵图案", DefaultPath: name, Filters: []mygo.FileFilter{{Name: strings.ToUpper(ext), Extensions: []string{ext}}}})
 		if e == nil && path != "" {
@@ -348,7 +356,7 @@ func (a *App) View(c *ui.Context) {
 		}
 		c.After(a.next.Sub(now))
 	}
-	if c.Shortcut(ui.Cmd, ui.KeyO) && !a.busy && !a.processing && !a.help && !a.importOpen {
+	if c.Shortcut(ui.Cmd, ui.KeyO) && a.mode == imageMode && !a.busy && !a.processing && !a.help && !a.importOpen {
 		a.importOpen = true
 		a.importError = ""
 	}
@@ -356,26 +364,44 @@ func (a *App) View(c *ui.Context) {
 		a.header(c)
 		a.deviceBar(c)
 		ui.Row(c).Grow(1).MinHeight(0).AlignItems(ui.Stretch).Children(func() {
-			a.library(c)
-			a.workspace(c)
-			a.inspector(c)
+			switch a.mode {
+			case textMode:
+				a.textEditor(c)
+				a.workspace(c)
+			case colorMode:
+				a.colorEditor(c)
+			default:
+				a.library(c)
+				a.workspace(c)
+				a.inspector(c)
+			}
 		})
 		a.footer(c)
 	})
 	a.dialogs(c)
 }
 func (a *App) header(c *ui.Context) {
-	ui.Row(c).Height(72).Shrink(0).Padding(12, 20).Gap(14).Background(surface).DragWindow().Children(func() {
+	ui.Row(c).Height(72).Shrink(0).Padding(12, 16).Gap(8).Background(surface).DragWindow().Children(func() {
 		ui.Image(c, appIcon).Size(44, 44)
 		ui.Column(c).Gap(3).Children(func() {
 			ui.Text(c, branding.Name).FontSize(21).Bold()
 			ui.Text(c, "PIXELBAR STUDIO · v"+branding.Version).FontSize(10).TextColor(muted)
 		})
 		ui.Spacer(c)
+		for _, mode := range []string{imageMode, textMode, colorMode} {
+			b := ui.Button(c, mode).Padding(9, 12).Disabled(a.busy || a.processing)
+			if a.mode == mode {
+				b.Background(ui.RGB(37, 58, 58)).TextColor(accent)
+			}
+			if b.Clicked() {
+				a.switchMode(mode)
+			}
+		}
+		ui.Spacer(c)
 		if ui.Button(c, "使用说明").Clicked() {
 			a.help = !a.help
 		}
-		if ui.PrimaryButton(c, "＋  导入素材").Padding(10, 18).Disabled(a.busy || a.processing).Clicked() {
+		if ui.PrimaryButton(c, "＋  导入素材").Padding(10, 12).Disabled(a.busy || a.processing || a.mode != imageMode).Clicked() {
 			a.importOpen = true
 			a.importError = ""
 		}
@@ -432,10 +458,14 @@ func (a *App) library(c *ui.Context) {
 func section(c *ui.Context, title string) { ui.Text(c, title).Bold().FontSize(13) }
 func (a *App) workspace(c *ui.Context) {
 	it := a.items[a.selected]
+	name := it.Name
+	if a.mode == textMode {
+		name = "文字点阵预览"
+	}
 	ui.Scroll(c).Grow(1).MinWidth(0).Padding(22).Gap(14).Children(func() {
 		ui.Row(c).Gap(12).Children(func() {
 			ui.Column(c).Gap(5).Grow(1).MinWidth(0).Children(func() {
-				ui.Text(c, it.Name).FontSize(25).Bold().MaxLines(1)
+				ui.Text(c, name).FontSize(25).Bold().MaxLines(1)
 				ui.Text(c, "预览你即将放上音箱的图案").TextColor(muted)
 			})
 			ui.Text(c, "256 × 32").FontSize(12).TextColor(accent).Padding(7, 10).Background(ui.RGB(29, 47, 46)).Radius(6)
@@ -445,7 +475,10 @@ func (a *App) workspace(c *ui.Context) {
 				ui.Text(c, "屏幕预览").Bold().Grow(1)
 				ui.Text(c, "单色点阵 · 实时效果").FontSize(11).TextColor(muted)
 			})
-			frame := a.frames[a.frame]
+			var frame pixelbar.Frame
+			if len(a.frames) > 0 {
+				frame = a.frames[a.frame]
+			}
 			ui.Box(c).Height(150).FillWidth().Draw(func(p *ui.Painter, r ui.Rect) {
 				p.Fill(r, ui.RGB(10, 13, 18), 10)
 				screen := ui.Rect{X: r.X + 22, Y: r.Y + (r.H-(r.W-44)/8)/2, W: r.W - 44, H: (r.W - 44) / 8}
@@ -471,7 +504,7 @@ func (a *App) workspace(c *ui.Context) {
 					a.frame = (a.frame + 1) % len(a.frames)
 				}
 				ui.Spacer(c)
-				ui.Textf(c, "%02d / %02d", a.frame+1, len(a.frames)).TextColor(muted)
+				ui.Textf(c, "%02d / %02d", min(a.frame+1, len(a.frames)), len(a.frames)).TextColor(muted)
 			})
 		})
 		ui.Row(c).Gap(10).Children(func() {
@@ -531,7 +564,10 @@ func (a *App) workspace(c *ui.Context) {
 				})
 			}
 		})
-		ui.Text(c, "预览颜色仅用于模拟；发送后沿用音箱当前的屏幕颜色。").FontSize(11).TextColor(muted)
+		ui.Text(c, a.colorPreviewLabel()).FontSize(11).TextColor(muted)
+		if a.mode == textMode && !a.textCurrent() {
+			ui.Text(c, "点击“生成预览”更新图案；生成成功后才能导出或发送。").TextColor(accent)
+		}
 	})
 }
 func metric(c *ui.Context, name, value string) {
@@ -639,10 +675,18 @@ func (a *App) footer(c *ui.Context) {
 				}
 				ui.Progress(c, p).Height(4)
 			} else {
-				ui.Text(c, "发送会替换当前屏幕内容；可在 TempoHub 中恢复官方图案。").FontSize(11).TextColor(muted)
+				hint := "发送会替换当前屏幕内容；可在 TempoHub 中恢复官方图案。"
+				if a.mode == colorMode {
+					hint = "应用颜色会修改音箱像素屏 RGB；回读确认后同步预览。"
+				}
+				ui.Text(c, hint).FontSize(11).TextColor(muted)
 			}
 		})
-		if ui.PrimaryButton(c, "发送到音箱  →").Padding(13, 24).Disabled(a.busy || a.processing || a.checking).Clicked() {
+		if a.mode == colorMode {
+			if ui.PrimaryButton(c, "应用颜色到音箱").Padding(13, 24).Disabled(a.busy || a.checking).Clicked() {
+				a.writeColor()
+			}
+		} else if ui.PrimaryButton(c, "发送到音箱  →").Padding(13, 24).Disabled(a.busy || a.processing || a.checking || !a.canSend()).Clicked() {
 			a.connect(true)
 		}
 	})
@@ -650,7 +694,15 @@ func (a *App) footer(c *ui.Context) {
 func (a *App) helpView(c *ui.Context) {
 	ui.Scroll(c).Height(390).MinWidth(0).Gap(12).Children(func() {
 		ui.Text(c, "开始你的像素创作").FontSize(25).Bold()
-		for _, s := range []struct{ title, body string }{{"01  连接音箱", "使用 USB 连接 Halo PixelBar，切换到声卡输入，退出官方 TempoHub，然后点击检测连接。"}, {"02  导入与调整", "导入 PNG、JPEG、BMP、WebP 或 GIF。选择完整显示、裁切或拉伸；调整阈值、反色和抖动，让图案在 256 × 32 的点阵上保持清晰。"}, {"03  预览与发送", "GIF 最多支持 8 帧。可暂停、逐帧查看和调整速度。点击发送到音箱，等待设备确认完成。"}, {"素材与隐私", "软件不上传图片到网络。素材库记录文件路径，原文件移动或删除后需重新导入。导出会保存处理后的 PNG 或循环 GIF。"}, {"支持范围", "已验证 Halo PixelBar 固件 1.1.1。Windows 已有设备验证基础；macOS 版本仍需实机验证。其他型号和固件不会自动写入。"}} {
+		for _, s := range []struct{ title, body string }{
+			{"01  连接音箱", "使用 USB 连接 Halo PixelBar，切换到声卡输入，退出官方 TempoHub，然后点击检测连接。"},
+			{"02  图片模式", "导入 PNG、JPEG、BMP、WebP 或 GIF。选择完整显示、裁切或拉伸；调整阈值、反色和抖动，让图案在 256 × 32 的点阵上保持清晰。"},
+			{"03  文字模式", "输入单行文字，选择字体和字号，设置静态、上下或左右移动，点击生成预览。动画生成 8 帧，预览与发送共用同一组图片；修改参数后需重新生成。"},
+			{"04  颜色设置", "连接后自动读取像素屏 RGB，图片与文字共用该颜色。调整滑块后点击应用颜色到音箱，等待回读确认；草稿不影响图案预览，黑色会让点阵不可见。"},
+			{"05  预览与发送", "GIF 最多支持 8 帧。可暂停、逐帧查看和调整速度。点击发送到音箱，等待设备确认完成。"},
+			{"素材与隐私", "软件不上传图片到网络。素材库记录文件路径，原文件移动或删除后需重新导入。导出会保存处理后的 PNG 或循环 GIF。"},
+			{"支持范围", "已验证 Halo PixelBar 固件 1.1.1。Windows 已有设备验证基础；新增颜色写入和文字上传尚未实机验证，macOS 版本仍需实机验证。其他型号和固件不会自动写入。"},
+		} {
 			ui.Column(c).Padding(18).Gap(10).Radius(10).Background(surface).Children(func() { ui.Text(c, s.title).Bold(); ui.Text(c, s.body).TextColor(muted) })
 		}
 	})
@@ -668,10 +720,13 @@ func Run(path string) error {
 		a.probe = func(done func(error)) {
 			go func() {
 				d, e := pixelbar.Connect()
+				var col pixelbar.RGB
+				colorErr := e
 				if e == nil {
+					col, colorErr = d.ScreenColor()
 					e = d.Close()
 				}
-				a.update(func() { done(e) })
+				a.update(func() { a.applyReadColor(col, colorErr); done(e) })
 			}()
 		}
 		a.checkDevice(time.Now())

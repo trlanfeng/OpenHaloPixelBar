@@ -36,6 +36,12 @@ func main() {
 			fmt.Println("音箱已确认接收与切换图案")
 		} else {
 			fmt.Println("Halo PixelBar · 固件 1.1.1 · USB 连接正常")
+			col, err := d.ScreenColor()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "读取屏幕颜色失败：", err)
+				return
+			}
+			fmt.Printf("像素屏颜色 %s · RGB %d, %d, %d\n", col.Hex(), col.R, col.G, col.B)
 		}
 		return
 	}
