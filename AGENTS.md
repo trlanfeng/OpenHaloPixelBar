@@ -1,10 +1,10 @@
-# OpenPixelBar 开发约定
+# OpenHaloPixelBar 开发约定
 
 本文件适用于整个仓库。开始修改前先阅读 `README.md`、相关代码和测试；子目录存在更具体的 `AGENTS.md` 时，同时遵守其约定。用户当前任务中的明确要求优先于本文。
 
 ## 项目定位
 
-- 项目名称统一为 **OpenPixelBar**，Go 模块名为 `openpixelbar`。
+- 项目名称统一为 **OpenHaloPixelBar**，Go 模块名为 `openpixelbar`。
 - 这是面向花再 Halo PixelBar 的非官方桌面工具，通过本地 USB HID 上传图片和短动画。
 - 主程序使用 **Go + MyGo Native UI**，保留原生绘制方式，不引入 WebView、HTML 前端或 Python 运行依赖。
 - 界面和面向用户的说明默认使用简体中文。代码标识符使用清晰的英文命名。
@@ -91,7 +91,7 @@ sh scripts/build-macos.sh arm64
 - Windows 资源由固定版本的 `go-winres` 生成；不要直接手改生成的 `.syso`。Mac 图标通过 ICNS 和 Info.plist 接入。
 - 版本更新需同步 Go 常量、`packaging/winres.json`、`packaging/Info.plist` 和 README，避免文件属性与界面版本不一致。
 - 每次发布新版本必须同步更新 `README.md`：当前版本、下载链接及文件名、更新说明、受影响的使用方法与界面截图、实际验证范围和未验证事项。清理“仅源码可用”“尚未发布”等已过期说明，保留免责声明和历史验证记录。README 更新须随版本提交进入发布标签；发布包内的 README 必须与该标签一致，发布后核对 Release 附件与 README 下载链接对应。
-- 保留旧 `OpenPB` 配置的迁移读取；新设置写入 `OpenPixelBar` 目录，不丢弃用户现有素材列表和偏好。
+- 保留旧 `OpenPixelBar`、`OpenPB` 配置的依次迁移读取；新设置写入 `OpenHaloPixelBar` 目录，不丢弃用户现有素材列表和偏好。
 
 ## 修改与交付
 

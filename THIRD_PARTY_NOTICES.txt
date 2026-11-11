@@ -1,4 +1,4 @@
-OpenPixelBar third-party software notices
+OpenHaloPixelBar third-party software notices
 
 The Go/MyGo build includes the following open-source dependencies.
 

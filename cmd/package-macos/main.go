@@ -30,7 +30,7 @@ func run() error {
 	for _, entry := range []struct {
 		source, name string
 		mode         os.FileMode
-	}{{*binary, "OpenPixelBar.app/Contents/MacOS/OpenPixelBar", 0755}, {"packaging/Info.plist", "OpenPixelBar.app/Contents/Info.plist", 0644}, {"internal/branding/icon.icns", "OpenPixelBar.app/Contents/Resources/OpenPixelBar.icns", 0644}, {"README.md", "OpenPixelBar.app/Contents/Resources/README.md", 0644}, {"THIRD_PARTY_NOTICES.txt", "OpenPixelBar.app/Contents/Resources/THIRD_PARTY_NOTICES.txt", 0644}} {
+	}{{*binary, "OpenHaloPixelBar.app/Contents/MacOS/OpenHaloPixelBar", 0755}, {"packaging/Info.plist", "OpenHaloPixelBar.app/Contents/Info.plist", 0644}, {"internal/branding/icon.icns", "OpenHaloPixelBar.app/Contents/Resources/OpenHaloPixelBar.icns", 0644}, {"README.md", "OpenHaloPixelBar.app/Contents/Resources/README.md", 0644}, {"THIRD_PARTY_NOTICES.txt", "OpenHaloPixelBar.app/Contents/Resources/THIRD_PARTY_NOTICES.txt", 0644}} {
 		h := &zip.FileHeader{Name: entry.name, Method: zip.Deflate}
 		h.SetMode(entry.mode)
 		w, e := z.CreateHeader(h)

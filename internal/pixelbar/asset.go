@@ -7,9 +7,6 @@ import (
 	"fmt"
 	_ "golang.org/x/image/bmp"
 	xdraw "golang.org/x/image/draw"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/basicfont"
-	"golang.org/x/image/math/fixed"
 	_ "golang.org/x/image/webp"
 	"image"
 	"image/color"
@@ -287,21 +284,6 @@ func Export(path string, frames []Frame, delays []int, animated bool) error {
 		return e
 	}
 	return closeErr
-}
-func Demo() *Asset {
-	im := image.NewRGBA(image.Rect(0, 0, Width, Height))
-	draw.Draw(im, im.Bounds(), image.Black, image.Point{}, draw.Src)
-	d := font.Drawer{Dst: im, Src: image.White, Face: basicfont.Face7x13, Dot: fixed.P(65, 21)}
-	d.DrawString("HELLO, PIXELBAR!")
-	for x := 0; x < Width; x++ {
-		im.Set(x, 0, color.White)
-		im.Set(x, 31, color.White)
-	}
-	for y := 0; y < Height; y++ {
-		im.Set(0, y, color.White)
-		im.Set(255, y, color.White)
-	}
-	return &Asset{Frames: []image.Image{im}, Delays: []int{100}, Width: Width, Height: Height}
 }
 
 func jpegOrientation(b []byte) int {

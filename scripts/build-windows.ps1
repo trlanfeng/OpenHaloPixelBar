@@ -12,7 +12,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Windows icon/resource generation failed' }
     & $Go test ./...
     if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
-    & $Go build -trimpath -ldflags '-s -w -H=windowsgui' -o dist/OpenPixelBar.exe ./cmd/openpixelbar
+    & $Go build -trimpath -ldflags '-s -w -H=windowsgui' -o dist/OpenHaloPixelBar.exe ./cmd/openpixelbar
     if ($LASTEXITCODE -ne 0) { throw 'Windows build failed' }
-    Write-Host (Join-Path $projectRoot 'dist/OpenPixelBar.exe')
+    Write-Host (Join-Path $projectRoot 'dist/OpenHaloPixelBar.exe')
 } finally { Pop-Location }

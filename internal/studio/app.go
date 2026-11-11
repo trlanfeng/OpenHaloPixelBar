@@ -1,7 +1,6 @@
 package studio
 
 import (
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	"github.com/egoist/mygo"
@@ -16,13 +15,13 @@ import (
 	"time"
 )
 
-//go:embed assets/car-on-road.gif
-var carGIF []byte
-
 type item struct {
 	Name, Path, Detail string
 	Asset              *pixelbar.Asset
 }
+
+const maxRecentItems = 20
+
 type settings struct {
 	Recent         []string
 	Threshold      float64
@@ -65,14 +64,18 @@ var appIcon, _ = ui.DecodeBitmap(branding.IconPNG)
 func New() *App {
 	a := &App{playing: true, status: "选择素材，调整预览，然后发送到音箱。", previewColor: ui.RGB(255, 200, 111), options: settings{Threshold: 128, Fit: "完整显示", Speed: "原速"}}
 	a.initModes()
-	car, _ := pixelbar.Decode(carGIF)
-	a.items = []*item{{Name: "公路旅行", Detail: "内置动画 · 8 帧", Asset: car}, {Name: "Hello, PixelBar", Detail: "内置图案 · 静态", Asset: pixelbar.Demo()}}
+	for _, theme := range pixelbar.BuiltinThemes() {
+		a.items = append(a.items, &item{Name: theme.Name, Detail: theme.Kind + " · 8 帧", Asset: theme.Asset})
+	}
 	if dir, e := os.UserConfigDir(); e == nil {
-		a.config = filepath.Join(dir, "OpenPixelBar", "settings.json")
+		a.config = filepath.Join(dir, branding.Name, "settings.json")
 		b, e := os.ReadFile(a.config)
-		// Read the previous name's settings once; subsequent saves use the new name.
-		if os.IsNotExist(e) {
-			b, e = os.ReadFile(filepath.Join(dir, "OpenPB", "settings.json"))
+		// Prefer the current settings, then fall back through previous names.
+		for _, legacyName := range []string{"OpenPixelBar", "OpenPB"} {
+			if !os.IsNotExist(e) {
+				break
+			}
+			b, e = os.ReadFile(filepath.Join(dir, legacyName, "settings.json"))
 		}
 		if e == nil {
 			var saved settings
@@ -90,8 +93,8 @@ func New() *App {
 	if a.options.Speed != "0.5×" && a.options.Speed != "2×" {
 		a.options.Speed = "原速"
 	}
-	for _, path := range a.options.Recent {
-		if len(a.items) >= 22 {
+	for i, path := range a.options.Recent {
+		if i >= maxRecentItems {
 			break
 		}
 		a.items = append(a.items, &item{Name: filepath.Base(path), Path: path, Detail: "最近导入 · 点击载入"})
@@ -217,10 +220,7 @@ func (a *App) loadPath(path string) {
 			}
 		}
 		if index < 0 {
-			if len(a.items) >= 22 {
-				a.items = a.items[:21]
-			}
-			a.items = append(a.items, &item{Name: filepath.Base(path), Path: path})
+			a.appendImported(&item{Name: filepath.Base(path), Path: path})
 			index = len(a.items) - 1
 		}
 		it := a.items[index]
@@ -236,6 +236,22 @@ func (a *App) loadPath(path string) {
 		a.finish("素材已载入，可调整图像并预览效果。", nil)
 	})
 }
+
+// Bound imported history independently of the built-in catalog.
+func (a *App) appendImported(it *item) {
+	count, last := 0, -1
+	for i, existing := range a.items {
+		if existing.Path != "" {
+			count++
+			last = i
+		}
+	}
+	if count >= maxRecentItems {
+		a.items = append(a.items[:last], a.items[last+1:]...)
+	}
+	a.items = append(a.items, it)
+}
+
 func (a *App) selectItem(index int) {
 	if a.busy || a.processing {
 		return
@@ -441,7 +457,7 @@ func (a *App) library(c *ui.Context) {
 				}
 			}
 		})
-		if a.selected >= 2 {
+		if a.items[a.selected].Path != "" {
 			if ui.Button(c, "从列表移除").Disabled(a.busy || a.processing).Clicked() {
 				a.items = append(a.items[:a.selected], a.items[a.selected+1:]...)
 				a.selected = 0
@@ -712,7 +728,7 @@ func Run(path string) error {
 	a := New()
 	mygo.App.SetName(branding.Name)
 	mygo.App.WhenReady(func() {
-		a.window = mygo.NewWindow(mygo.WindowOptions{Title: "OpenPixelBar · PixelBar Studio", Width: 1320, Height: 880, MinWidth: 1080, MinHeight: 720, TitleBarStyle: mygo.TitleBarHidden, HideWindowButtons: true, BackgroundColor: "#0f1218", Content: ui.View(a.View)})
+		a.window = mygo.NewWindow(mygo.WindowOptions{Title: branding.Name + " · PixelBar Studio", Width: 1320, Height: 880, MinWidth: 1080, MinHeight: 720, TitleBarStyle: mygo.TitleBarHidden, HideWindowButtons: true, BackgroundColor: "#0f1218", Content: ui.View(a.View)})
 		_ = a.window.SetIcon(branding.IconPNG)
 		if runtime.GOOS == "darwin" {
 			_ = mygo.App.Dock.SetIcon(branding.IconPNG)

@@ -13,7 +13,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "macOS $targetArch build failed" }
         $env:GOOS = 'windows'
         $env:GOARCH = 'amd64'
-        & $Go run ./cmd/package-macos -binary "build/openpixelbar-darwin-$targetArch" -out "dist/OpenPixelBar-macos-$targetArch.zip"
+        & $Go run ./cmd/package-macos -binary "build/openpixelbar-darwin-$targetArch" -out "dist/OpenHaloPixelBar-macos-$targetArch.zip"
         if ($LASTEXITCODE -ne 0) { throw "macOS $targetArch packaging failed" }
     }
 } finally { Pop-Location }

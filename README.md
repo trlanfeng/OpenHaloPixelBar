@@ -1,10 +1,10 @@
-<img src="internal/branding/icon.png" alt="OpenPixelBar 图标" width="96" />
+<img src="internal/branding/icon.png" alt="OpenHaloPixelBar 图标" width="96" />
 
-# OpenPixelBar
+# OpenHaloPixelBar
 
 给花再 **Halo PixelBar** 音箱的屏幕，放上你自己的图片和动画。
 
-OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通过 USB HID 与音箱通信。无需运行 TempoHub，不依赖 Python 或 WebView。当前版本：**v0.3.0 预发布版**。
+OpenHaloPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通过 USB HID 与音箱通信。无需运行 TempoHub，不依赖 Python 或 WebView。当前版本：**v0.3.0 预发布版**。
 
 > **重要免责声明**
 >
@@ -18,13 +18,13 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 
 ## 应用截图
 
-![OpenPixelBar 主界面：素材库、内置公路旅行动画预览、逐帧查看和图像调整](docs/images/openpixelbar-v0.3.0-studio.png)
+![OpenHaloPixelBar 主界面：素材库、内置公路旅行动画预览、逐帧查看和图像调整](docs/images/openpixelbar-studio.png)
 
-主界面展示内置“公路旅行”动画，可在同一窗口选择素材、预览效果、调整图像并导出或发送到音箱。
+上图为当前源码的主界面，展示内置“公路旅行”动画，可在同一窗口选择素材、预览效果、调整图像并导出或发送到音箱。
 
 ## 下载 v0.3.0 预发布版
 
-请先阅读上述免责声明。解压 Windows 压缩包后运行 `OpenPixelBar.exe`；Windows 程序未签名，Mac 包仅供实机测试，未完成 Developer ID 签名或 Apple 公证。
+v0.3.0 是更名前以 OpenPixelBar 名称发布的历史版本，下载文件、包内程序和下方 v0.3.0 文字／颜色模式截图仍使用旧名称。当前源码及新构建产物使用 OpenHaloPixelBar。请先阅读上述免责声明。解压此 Windows 压缩包后运行 `OpenPixelBar.exe`；Windows 程序未签名，Mac 包仅供实机测试，未完成 Developer ID 签名或 Apple 公证。
 
 | 平台 | 下载 | 状态 |
 | --- | --- | --- |
@@ -56,7 +56,7 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 | 音箱固件 | **1.1.1** | 已验证连接、协议回复、动画上传及上传后场景确认；程序拒绝其他固件版本 |
 | USB 设备 | VID `2D99` / PID `A160`；usage page `FF14` | 已验证控制接口，64 字节 HID 报文 |
 | Windows | **Windows 11 专业版 x64，10.0.26300 / Build 26300** | 已验证窗口启动、图像预览、应用内弹框、启动检测与每 10 秒检测，以及 Go 版汽车 GIF 上传 |
-| OpenPixelBar | **v0.3.0 预发布版** | 协议、图像、文字生成、颜色确认、调色板同步与界面自动测试通过；实机范围见下文 |
+| OpenPixelBar（更名前） | **v0.3.0 预发布版** | 协议、图像、文字生成、颜色确认、调色板同步与界面自动测试通过；实机范围见下文 |
 | macOS Apple Silicon | `arm64` 构建 | **仅交叉编译及应用包检查通过，未在 Mac 实机验证界面或 USB 上传** |
 | macOS Intel | `amd64` 构建 | **仅交叉编译及应用包检查通过，未在 Mac 实机验证界面或 USB 上传** |
 | 其他 Windows / 音箱 / 固件 | — | **未测试** |
@@ -75,7 +75,7 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 - 顶部“图片模式 / 文字模式 / 颜色设置”标签；切换标签保留图片和文字各自的预览与播放位置。
 - 文字模式支持选择常用系统字体或载入 TTF / OTF / TTC、8～32 px 字号、静态 / 上下移动 / 左右移动，生成点阵图片后预览、导出和发送。
 - 颜色设置支持调色板、RGB 滑块和常用色，调色板选中色与 RGB 双向同步；启动与每 10 秒检测时读取音箱颜色，同步图片和文字预览。颜色写入后回读核对，确认前不显示成功。
-- 素材列表、连续像素预览、播放/暂停和逐帧查看；内置公路旅行汽车动画。
+- 素材列表、连续像素预览、播放/暂停和逐帧查看；内置公路旅行、东风 DF4D、海底漫游、山水行舟四个动画主题。
 - 完整显示、铺满裁切、拉伸填满，以及阈值、反色和抖动处理。
 - 动画速度调整，导出处理后的 PNG 或循环 GIF。
 - 顶部设备状态栏：启动时检测一次，之后每 10 秒后台检测；上传期间跳过检测，避免 USB 冲突。
@@ -83,6 +83,29 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 - 逐包确认、最终接收确认与屏幕场景核对；错误会在界面中显示。
 
 ## 支持的素材
+
+### 内置主题
+
+在左侧素材库选择主题；列表可滚动，支持播放、逐帧查看、速度调整、导出和发送。内置主题不占用最近导入的 20 个素材记录，也不能从列表移除。
+
+| 主题 | 画面 | 动画 |
+| --- | --- | --- |
+| 公路旅行 | 汽车、群山与流动路面 | 8 帧 · 100 ms/帧 |
+| 东风 · DF4D | 双端驾驶室、散热格栅、客车与排气 | 8 帧 · 120 ms/帧 |
+| 海底漫游 | 游鱼、水草与上升气泡 | 8 帧 · 160 ms/帧 |
+| 山水行舟 | 群山、亭子、乌篷船与水波 | 8 帧 · 180 ms/帧 |
+
+列车主题是适配 256 × 32 单色点阵的原创简化绘制，以国产车型为灵感，不是精确比例模型或官方素材。车型参考：[中国中车 DF4D](https://www.crrcgc.cc/crrcgc/2016-01/19/article_D386F51537E249AA9F843FAC85899A54.html)。新增主题的自动测试与本地预览不代表已经完成音箱实机上传或用户目视确认。
+
+公路旅行使用内嵌 GIF，另外三个主题使用 Go 整数像素绘制，运行时无需外部素材文件或 Python。可批量导出这四个主题的原尺寸 GIF、放大预览 GIF 和主题总览图：
+
+```sh
+go run ./cmd/generate-themes
+```
+
+输出位于 `dist/themes/`；其中 `*-preview.gif` 仅供放大预览，上传建议使用不带 `-preview` 后缀的原尺寸 GIF。
+
+### 导入格式
 
 | 类型 | 扩展名 | 处理方式 |
 | --- | --- | --- |
@@ -99,7 +122,7 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 ## 使用方法
 
 1. 通过 USB 连接 Halo PixelBar，切换到声卡输入，退出 TempoHub，避免同时访问设备。
-2. Windows 双击 `dist/OpenPixelBar.exe`。Mac 解压对应架构的测试包，打开 `OpenPixelBar.app`。
+2. 当前源码构建后，Windows 双击 `dist/OpenHaloPixelBar.exe`，Mac 打开 `OpenHaloPixelBar.app`；上述 v0.3.0 历史下载包内仍为 `OpenPixelBar.exe` / `OpenPixelBar.app`。
 3. 查看顶部设备状态；程序会自动检测，也可以点击“检测连接”。
 4. 点击“导入素材”，阅读格式说明和免责声明，再点击弹框中间的“选择图片或 GIF”。
 5. 调整图案并查看预览；动画可以暂停、逐帧检查和调整速度。
@@ -122,13 +145,13 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 
 - 图片不会上传到网络；素材通过本地 USB 发送。
 - 素材列表只记录原文件路径，不复制原图。原文件移动或删除后需重新导入。
-- Windows 设置：`%APPDATA%/OpenPixelBar/settings.json`。
-- macOS 设置：`~/Library/Application Support/OpenPixelBar/settings.json`。
-- 首次以新名称运行时，会尝试读取旧 `OpenPB` 目录下的设置，后续保存到 `OpenPixelBar` 目录。
+- Windows 设置：`%APPDATA%/OpenHaloPixelBar/settings.json`。
+- macOS 设置：`~/Library/Application Support/OpenHaloPixelBar/settings.json`。
+- 首次以新名称运行时，会依次尝试读取旧 `OpenPixelBar`、`OpenPB` 目录下的设置（仅在前一目录没有设置文件时回退），后续保存到 `OpenHaloPixelBar` 目录。
 
 ## 从源码构建
 
-需要 **Go 1.27.3+**，无需 C 编译器。首次构建需要联网下载依赖；依赖版本记录在 `go.mod` 和 `go.sum`。Windows 资源生成工具固定为 `go-winres v0.3.3`。默认 Go 代理不可达时，可自行配置 `GOPROXY`。
+Go 模块名和源码入口保留为 `openpixelbar`、`cmd/openpixelbar`。需要 **Go 1.27.3+**，无需 C 编译器。首次构建需要联网下载依赖；依赖版本记录在 `go.mod` 和 `go.sum`。Windows 资源生成工具固定为 `go-winres v0.3.3`。默认 Go 代理不可达时，可自行配置 `GOPROXY`。
 
 ### Windows x64
 
@@ -136,7 +159,7 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 ./scripts/build-windows.ps1
 ```
 
-输出：`dist/OpenPixelBar.exe`，包含应用图标、Windows 清单和版本信息。
+输出：`dist/OpenHaloPixelBar.exe`，包含应用图标、Windows 清单和版本信息。
 
 ### macOS
 
@@ -148,8 +171,8 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 
 输出：
 
-- `dist/OpenPixelBar-macos-arm64.zip`：Apple Silicon。
-- `dist/OpenPixelBar-macos-amd64.zip`：Intel。
+- `dist/OpenHaloPixelBar-macos-arm64.zip`：Apple Silicon。
+- `dist/OpenHaloPixelBar-macos-amd64.zip`：Intel。
 
 在 Mac 上构建并进行本地 ad-hoc 签名：
 
