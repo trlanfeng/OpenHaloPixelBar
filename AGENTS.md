@@ -90,6 +90,7 @@ sh scripts/build-macos.sh arm64
 - 图标源文件为 `internal/branding/icon.svg`。修改后运行 `go run ./cmd/generate-icon`，再运行平台构建脚本。
 - Windows 资源由固定版本的 `go-winres` 生成；不要直接手改生成的 `.syso`。Mac 图标通过 ICNS 和 Info.plist 接入。
 - 版本更新需同步 Go 常量、`packaging/winres.json`、`packaging/Info.plist` 和 README，避免文件属性与界面版本不一致。
+- 每次发布新版本必须同步更新 `README.md`：当前版本、下载链接及文件名、更新说明、受影响的使用方法与界面截图、实际验证范围和未验证事项。清理“仅源码可用”“尚未发布”等已过期说明，保留免责声明和历史验证记录。README 更新须随版本提交进入发布标签；发布包内的 README 必须与该标签一致，发布后核对 Release 附件与 README 下载链接对应。
 - 保留旧 `OpenPB` 配置的迁移读取；新设置写入 `OpenPixelBar` 目录，不丢弃用户现有素材列表和偏好。
 
 ## 修改与交付

@@ -8,14 +8,14 @@
     "long-path-aware": true
   }}},
   "RT_VERSION": {"#1": {"0000": {
-    "fixed": {"file_version": "0.2.0.0", "product_version": "0.2.0.0"},
+    "fixed": {"file_version": "0.3.0.0", "product_version": "0.3.0.0"},
     "info": {"0409": {
       "FileDescription": "OpenPixelBar - PixelBar display studio",
-      "FileVersion": "0.2.0.0",
+      "FileVersion": "0.3.0.0",
       "InternalName": "OpenPixelBar",
       "OriginalFilename": "OpenPixelBar.exe",
       "ProductName": "OpenPixelBar",
-      "ProductVersion": "0.2.0"
+      "ProductVersion": "0.3.0"
     }}
   }}}
 }

@@ -4,7 +4,7 @@
 
 给花再 **Halo PixelBar** 音箱的屏幕，放上你自己的图片和动画。
 
-OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通过 USB HID 与音箱通信。无需运行 TempoHub，不依赖 Python 或 WebView。当前开发版本：**v0.2.0**。
+OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通过 USB HID 与音箱通信。无需运行 TempoHub，不依赖 Python 或 WebView。当前版本：**v0.3.0 预发布版**。
 
 > **重要免责声明**
 >
@@ -18,21 +18,33 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 
 ## 应用截图
 
-![OpenPixelBar 主界面：素材库、内置公路旅行动画预览、逐帧查看和图像调整](docs/images/openpixelbar-studio.png)
+![OpenPixelBar 主界面：素材库、内置公路旅行动画预览、逐帧查看和图像调整](docs/images/openpixelbar-v0.3.0-studio.png)
 
 主界面展示内置“公路旅行”动画，可在同一窗口选择素材、预览效果、调整图像并导出或发送到音箱。
 
-## 下载 v0.2.0 预发布版
+## 下载 v0.3.0 预发布版
 
-请先阅读上述免责声明。解压 Windows 压缩包后运行 `OpenPixelBar.exe`；Mac 包仅供实机测试，未完成 Developer ID 签名或 Apple 公证。
+请先阅读上述免责声明。解压 Windows 压缩包后运行 `OpenPixelBar.exe`；Windows 程序未签名，Mac 包仅供实机测试，未完成 Developer ID 签名或 Apple 公证。
 
 | 平台 | 下载 | 状态 |
 | --- | --- | --- |
-| Windows x64 | [Windows 便携包](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.2.0/OpenPixelBar-v0.2.0-windows-amd64.zip) | 已在下述 Windows 环境实测 |
-| macOS Apple Silicon | [arm64 测试包](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.2.0/OpenPixelBar-v0.2.0-macos-arm64.zip) | 尚未实机验证 |
-| macOS Intel | [amd64 测试包](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.2.0/OpenPixelBar-v0.2.0-macos-amd64.zip) | 尚未实机验证 |
+| Windows x64 | [Windows 便携包](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.3.0/OpenPixelBar-v0.3.0-windows-amd64.zip) | 已有 Windows 实测基础；新增功能验证范围见下文 |
+| macOS Apple Silicon | [arm64 测试包](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.3.0/OpenPixelBar-v0.3.0-macos-arm64.zip) | 尚未实机验证 |
+| macOS Intel | [amd64 测试包](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.3.0/OpenPixelBar-v0.3.0-macos-amd64.zip) | 尚未实机验证 |
 
-[Release 页面](https://github.com/trlanfeng/OpenPixelBar/releases/tag/v0.2.0) · [SHA-256 校验文件](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.2.0/SHA256SUMS.txt)
+[Release 页面](https://github.com/trlanfeng/OpenPixelBar/releases/tag/v0.3.0) · [SHA-256 校验文件](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.3.0/SHA256SUMS.txt)
+
+## v0.3.0 更新说明
+
+- 顶部新增图片模式、文字模式和颜色设置标签，切换时保留各自的预览与播放位置。
+- 文字可选择字体、字号、静态或上下／左右移动；生成实际点阵帧后预览、导出或发送。
+- 支持读取音箱当前 RGB 并同步图案预览；颜色修改使用独立指令，回读确认后显示成功。
+- 新增可拖动调色板，与 RGB 滑块、常用色和恢复操作双向同步，支持方向键微调。
+- 保留图片导入、处理、逐帧查看和上传确认流程。本版本仍为预发布版：新增文字上传与颜色写入尚未实机验证，Mac 尚未实机验证。
+
+![v0.3.0 文字模式：字体、字号、动画与点阵预览](docs/images/openpixelbar-v0.3.0-text.png)
+
+![v0.3.0 颜色设置：调色板与 RGB 双向同步](docs/images/openpixelbar-v0.3.0-color.png)
 
 ## 已测试版本与范围
 
@@ -44,7 +56,7 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 | 音箱固件 | **1.1.1** | 已验证连接、协议回复、动画上传及上传后场景确认；程序拒绝其他固件版本 |
 | USB 设备 | VID `2D99` / PID `A160`；usage page `FF14` | 已验证控制接口，64 字节 HID 报文 |
 | Windows | **Windows 11 专业版 x64，10.0.26300 / Build 26300** | 已验证窗口启动、图像预览、应用内弹框、启动检测与每 10 秒检测，以及 Go 版汽车 GIF 上传 |
-| OpenPixelBar | **v0.2.0 开发版** | 当前 Go/MyGo 实现；协议、图像、格式校验和界面自动测试通过 |
+| OpenPixelBar | **v0.3.0 预发布版** | 协议、图像、文字生成、颜色确认、调色板同步与界面自动测试通过；实机范围见下文 |
 | macOS Apple Silicon | `arm64` 构建 | **仅交叉编译及应用包检查通过，未在 Mac 实机验证界面或 USB 上传** |
 | macOS Intel | `amd64` 构建 | **仅交叉编译及应用包检查通过，未在 Mac 实机验证界面或 USB 上传** |
 | 其他 Windows / 音箱 / 固件 | — | **未测试** |
@@ -97,14 +109,14 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 
 使用说明也可从应用右上角的“使用说明”弹框查看。请只导入你拥有使用权的图片或动画。
 
-### 文字模式与颜色设置（当前源码构建）
+### 文字模式与颜色设置
 
 - **文字模式**：输入 1～80 字的单行文字，选择字体、字号、动画方式和每帧时长，再点击“生成预览”。预览、PNG / GIF 导出与上传使用相同点阵帧；参数修改或生成失败后须重新生成，不能发送旧预览。
 - 常用系统字体由本机提供，不随程序分发。也可载入不超过 64 MB 的 `.ttf`、`.otf`、`.ttc` 字体文件；字体集合使用第一个字面。不支持的字符会明确报错，请改用包含相应字形的字体。
 - 静态文字生成 1 帧；动画生成 8 帧往返移动，每帧可设为 100～2000 ms。长文字可选择左右移动，但受 8 帧限制步幅较大；上下移动可能经过屏幕边缘。无法容纳的文字会报错，需缩短内容或减小字号。
 - **颜色设置**：可在调色板拖动选择饱和度与亮度，用下方色相条选择色相；也可调整 RGB 滑块。两者及常用色、恢复操作会同步更新选中色与 RGB 数值，调色板支持方向键微调。选好后点击“应用颜色到音箱”。未应用的草稿不会改变图片与文字预览，后台读取也不会覆盖调色草稿。“恢复为已读取颜色”可撤销草稿。设置黑色会让亮点不可见。
 - 颜色通过独立 RGB 指令设置，回读时同时核对其他屏幕设置未改变；发生错误不自动重试。检测、上传和颜色写入共用任务互斥，避免同时访问 USB。
-- **2026-11-12 验证**：在上述 Windows / Halo PixelBar 固件 1.1.1 环境完成颜色实机读取；文字生成、标签交互、颜色写入确认和失败分支完成自动测试。**新增文字上传和颜色修改尚未进行实机写入与用户目视验证**；Mac 仍仅完成交叉构建与包检查。这些功能未另行发布到上方 v0.2.0 下载包。
+- **2026-11-12 验证**：在上述 Windows / Halo PixelBar 固件 1.1.1 环境完成颜色实机读取；文字生成、标签交互、颜色写入确认和失败分支完成自动测试。**新增文字上传和颜色修改尚未进行实机写入与用户目视验证**；Mac 仍仅完成交叉构建与包检查。以上功能已包含在 v0.3.0 预发布包中。
 
 ### 本地数据
 
