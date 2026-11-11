@@ -16,6 +16,12 @@ OpenPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通
 >
 > **目前仅测试了 Halo PixelBar 固件 1.1.1。测试成功不代表其他设备、固件或使用环境同样安全，也不保证已测试环境绝不会发生故障。**
 
+## 应用截图
+
+![OpenPixelBar 主界面：素材库、内置公路旅行动画预览、逐帧查看和图像调整](docs/images/openpixelbar-studio.png)
+
+主界面展示内置“公路旅行”动画，可在同一窗口选择素材、预览效果、调整图像并导出或发送到音箱。
+
 ## 下载 v0.2.0 预发布版
 
 请先阅读上述免责声明。解压 Windows 压缩包后运行 `OpenPixelBar.exe`；Mac 包仅供实机测试，未完成 Developer ID 签名或 Apple 公证。
