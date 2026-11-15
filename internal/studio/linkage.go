@@ -97,7 +97,7 @@ func (a *App) saveLinkage() {
 }
 
 func (a *App) startLinkage(now time.Time) {
-	if a.closed || a.linkEnabled || a.busy || a.processing || a.checking || a.linkScanning {
+	if a.closed || a.exitPending || a.linkEnabled || a.busy || a.processing || a.checking || a.linkScanning {
 		return
 	}
 	if err := a.validateLinkage(true); err != nil {
@@ -320,7 +320,7 @@ func (a *App) linkageEditor(c *ui.Context) {
 		} else {
 			ui.Text(c, "点击左侧“添加应用规则”，设置要监控的应用和文字列表。").Padding(20).TextColor(muted)
 		}
-		ui.Text(c, "监控每约 2 秒检查一次；程序需保持运行，最小化不影响监控。关闭后停止，重启不自动写入。监控期间禁止手动发送图案或修改颜色，需先停止监控。").FontSize(11).TextColor(muted)
+		ui.Text(c, "监控每约 2 秒检查一次；最小化到托盘继续监控，明确退出后停止，重启不自动写入。监控期间禁止手动发送图案或修改颜色，需先停止监控。").FontSize(11).TextColor(muted)
 		ui.Text(c, "启用将替换音箱保存的文字与当前显示模式。macOS 前台识别尚未实机验证；检测或写入失败会暂停，需手动重新启用。").FontSize(11).TextColor(muted)
 	})
 }

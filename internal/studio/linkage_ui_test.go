@@ -115,6 +115,7 @@ func TestLinkageUILayoutAndWindowControls(t *testing.T) {
 			for _, label := range []string{"最小化", "最大化或还原", "关闭窗口"} {
 				linkageClick(t, tt, label)
 			}
+			linkageClick(t, tt, "取消")
 			linkageClick(t, tt, "保存规则")
 			if a.failed || len(linkageSavedSettings(t, a).AppRules) != 1 {
 				t.Fatalf("保存按钮未写入规则：%s", a.linkMessage)

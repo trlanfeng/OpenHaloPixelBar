@@ -9,7 +9,7 @@ import (
 // All state transitions run on the UI thread. The probe only performs I/O
 // in its worker and dispatches its completion back to that thread.
 func (a *App) checkDevice(now time.Time) {
-	if a.closed || a.busy || a.checking || a.probe == nil {
+	if a.closed || a.exitPending || a.busy || a.checking || a.probe == nil {
 		return
 	}
 	a.checking = true
@@ -62,6 +62,20 @@ func (a *App) deviceBar(c *ui.Context) {
 }
 
 func (a *App) dialogs(c *ui.Context) {
+	if a.exitPending {
+		open := true
+		ui.DialogBase(c.Key("exit-wait-dialog"), &open, func(backdrop, panel ui.Element) {
+			backdrop.Background(ui.RGBA(3, 6, 10, .78))
+			panel.Width(520).MaxWidthPercent(90).Padding(24).Gap(14).Background(surface).Radius(16)
+			ui.Text(c, "正在安全退出").FontSize(23).Bold()
+			ui.Text(c, "监控已停止。正在等待设备通信或其他在途操作完成，完成后自动退出，请勿拔出 USB。").TextColor(muted)
+		})
+		return
+	}
+	if a.closePrompt {
+		a.closeDialog(c)
+		return
+	}
 	if ui.DialogBase(c.Key("import-dialog"), &a.importOpen, func(backdrop, panel ui.Element) {
 		backdrop.Background(ui.RGBA(3, 6, 10, .78))
 		panel.Width(600).MaxWidthPercent(90).Padding(26).Gap(18).Radius(16).Border(1, border).Background(surface).Label("导入素材")

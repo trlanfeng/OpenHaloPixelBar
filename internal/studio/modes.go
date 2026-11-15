@@ -47,7 +47,7 @@ func (a *App) initModes() {
 }
 
 func (a *App) switchMode(mode string) {
-	if a.busy || a.processing || a.mode == mode {
+	if a.busy || a.processing || a.exitPending || a.mode == mode {
 		return
 	}
 	state := previewState{a.frames, a.delays, a.frame, a.playing}
@@ -123,7 +123,7 @@ func (a *App) canSend() bool {
 }
 
 func (a *App) generateText() {
-	if a.busy || a.processing || a.mode != textMode {
+	if a.busy || a.processing || a.exitPending || a.mode != textMode {
 		return
 	}
 	draft := a.textDraft
@@ -185,7 +185,7 @@ func (a *App) colorPreviewLabel() string {
 }
 
 func (a *App) writeColor() {
-	if a.busy || a.processing || a.checking || a.closed || a.linkEnabled {
+	if a.busy || a.processing || a.exitPending || a.checking || a.closed || a.linkEnabled {
 		return
 	}
 	col := pixelbar.RGB{R: byte(a.red), G: byte(a.green), B: byte(a.blue)}
@@ -326,7 +326,7 @@ func readFont(path string) ([]byte, error) {
 }
 
 func (a *App) chooseFont() {
-	if a.busy || a.processing {
+	if a.busy || a.processing || a.exitPending {
 		return
 	}
 	a.busy = true
