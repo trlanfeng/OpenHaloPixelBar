@@ -2,6 +2,7 @@ package studio
 
 import (
 	"encoding/json"
+	"openpixelbar/internal/rotation"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -31,7 +32,7 @@ func TestSettingsNameMigration(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			want := settings{Recent: []string{"first.png", "second.gif"}, Threshold: 180, Fit: "铺满裁切", Invert: true, Dither: true, Speed: "2×"}
+			want := settings{Recent: []string{"first.png", "second.gif"}, Threshold: 180, Fit: "铺满裁切", Invert: true, Dither: true, Speed: "2×", AppRules: []rotation.Rule{{Name: "编辑器", Executable: "editor.exe", Texts: []string{"专注", "休息"}, IntervalSeconds: 5, Enabled: true}}}
 			originals := map[string][]byte{}
 			for name, content := range tc.files {
 				data := []byte("invalid JSON")
@@ -65,6 +66,9 @@ func TestSettingsNameMigration(t *testing.T) {
 			}
 			a.save()
 			restored := New()
+			if restored.linkEnabled || restored.linkEngine.Active() != -1 || restored.busy || restored.linkScanning {
+				t.Fatal("restart must not automatically monitor or write")
+			}
 			if !reflect.DeepEqual(restored.options, a.options) {
 				t.Fatalf("settings or recent paths lost after save: %+v", restored.options)
 			}

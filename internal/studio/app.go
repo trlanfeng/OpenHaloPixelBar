@@ -8,6 +8,7 @@ import (
 	"math"
 	"openpixelbar/internal/branding"
 	"openpixelbar/internal/pixelbar"
+	"openpixelbar/internal/rotation"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -28,9 +29,11 @@ type settings struct {
 	Fit            string
 	Invert, Dither bool
 	Speed          string
+	AppRules       []rotation.Rule
 }
 type App struct {
 	modes
+	linkage
 	window                         *mygo.Window
 	items                          []*item
 	selected                       int
@@ -99,6 +102,7 @@ func New() *App {
 		}
 		a.items = append(a.items, &item{Name: filepath.Base(path), Path: path, Detail: "最近导入 · 点击载入"})
 	}
+	a.initLinkage()
 	a.prepare()
 	return a
 }
@@ -140,9 +144,9 @@ func (a *App) prepare() {
 	a.processing = true
 	go func() { f, d := work(); a.update(func() { apply(f, d) }) }()
 }
-func (a *App) save() {
+func (a *App) save() error {
 	if a.config == "" {
-		return
+		return nil
 	}
 	a.options.Recent = nil
 	for _, it := range a.items {
@@ -152,15 +156,16 @@ func (a *App) save() {
 	}
 	b, e := json.MarshalIndent(a.options, "", "  ")
 	if e != nil {
-		return
+		return e
 	}
 	if e = os.MkdirAll(filepath.Dir(a.config), 0700); e != nil {
-		return
+		return e
 	}
 	tmp := a.config + ".tmp"
-	if os.WriteFile(tmp, b, 0600) == nil {
-		_ = os.Rename(tmp, a.config)
+	if e = os.WriteFile(tmp, b, 0600); e != nil {
+		return e
 	}
+	return os.Rename(tmp, a.config)
 }
 func (a *App) update(fn func()) {
 	a.window.Update(func() {
@@ -272,7 +277,7 @@ func (a *App) connect(upload bool) {
 		a.checkDevice(time.Now())
 		return
 	}
-	if a.busy || a.processing || a.checking || !a.canSend() {
+	if a.busy || a.processing || a.checking || a.linkEnabled || !a.canSend() {
 		return
 	}
 	a.busy = true
@@ -386,6 +391,8 @@ func (a *App) View(c *ui.Context) {
 				a.workspace(c)
 			case colorMode:
 				a.colorEditor(c)
+			case linkageMode:
+				a.linkageEditor(c)
 			default:
 				a.library(c)
 				a.workspace(c)
@@ -404,7 +411,7 @@ func (a *App) header(c *ui.Context) {
 			ui.Text(c, "PIXELBAR STUDIO · v"+branding.Version).FontSize(10).TextColor(muted)
 		})
 		ui.Spacer(c)
-		for _, mode := range []string{imageMode, textMode, colorMode} {
+		for _, mode := range []string{imageMode, textMode, colorMode, linkageMode} {
 			b := ui.Button(c, mode).Padding(9, 12).Disabled(a.busy || a.processing)
 			if a.mode == mode {
 				b.Background(ui.RGB(37, 58, 58)).TextColor(accent)
@@ -695,10 +702,21 @@ func (a *App) footer(c *ui.Context) {
 				if a.mode == colorMode {
 					hint = "应用颜色会修改音箱像素屏 RGB；回读确认后同步预览。"
 				}
+				if a.mode == linkageMode || a.linkEnabled {
+					hint = "原生文字直接设置；停止后保留最后内容。在途写入完成后停止，无自动重试。"
+				}
 				ui.Text(c, hint).FontSize(11).TextColor(muted)
 			}
 		})
-		if a.mode == colorMode {
+		if a.linkEnabled {
+			if ui.Button(c, "停止应用监控").Padding(13, 20).Clicked() {
+				a.stopLinkage("已停止监控，保留音箱最后内容。")
+			}
+		} else if a.mode == linkageMode {
+			if ui.PrimaryButton(c, "启用应用监控").Padding(13, 20).Disabled(a.busy || a.processing || a.checking || a.linkScanning).Clicked() {
+				a.startLinkage(time.Now())
+			}
+		} else if a.mode == colorMode {
 			if ui.PrimaryButton(c, "应用颜色到音箱").Padding(13, 24).Disabled(a.busy || a.checking).Clicked() {
 				a.writeColor()
 			}
@@ -715,13 +733,32 @@ func (a *App) helpView(c *ui.Context) {
 			{"02  图片模式", "导入 PNG、JPEG、BMP、WebP 或 GIF。选择完整显示、裁切或拉伸；调整阈值、反色和抖动，让图案在 256 × 32 的点阵上保持清晰。"},
 			{"03  文字模式", "输入单行文字，选择字体和字号，设置静态、上下或左右移动，点击生成预览。动画生成 8 帧，预览与发送共用同一组图片；修改参数后需重新生成。"},
 			{"04  颜色设置", "连接后自动读取像素屏 RGB，图片与文字共用该颜色。调整滑块后点击应用颜色到音箱，等待回读确认；草稿不影响图案预览，黑色会让点阵不可见。"},
-			{"05  预览与发送", "GIF 最多支持 8 帧。可暂停、逐帧查看和调整速度。点击发送到音箱，等待设备确认完成。"},
+			{"05  应用联动（原生文字）", "每个应用配置独立文字列表和 1～86400 秒间隔；每行一条，增删或移动行即可编辑顺序，列表无固定条数上限。单条最多 16 字且 UTF-8 不超过 48 字节。直接使用音箱原生静态文字指令，不生成图片，不使用图片上传流程。"},
+			{"06  联动优先级与启停", "手动启用监控后，已运行的目标应用立即参与轮播；前台已配置应用优先，其他前台保持当前规则。最后一个实例退出时回退到最近获得焦点且仍运行的规则，无历史按列表顺序。切换规则从第一条开始，同规则失焦不重置。全部退出停止轮播并保留最后文字，监控仍等待目标重新启动。"},
+			{"07  联动安全边界", "每条文字写入并全文回读确认后开始计时，失败暂停且不自动重试。停止或关闭时不取消在途写入，需等其完成；停止后不恢复旧内容。监控期间禁止手动上传及颜色写入。保存配置后重启仍需手动启用，程序需保持运行。"},
+			{"08  预览与发送", "GIF 最多支持 8 帧。可暂停、逐帧查看和调整速度。点击发送到音箱，等待设备确认完成。"},
 			{"素材与隐私", "软件不上传图片到网络。素材库记录文件路径，原文件移动或删除后需重新导入。导出会保存处理后的 PNG 或循环 GIF。"},
-			{"支持范围", "已验证 Halo PixelBar 固件 1.1.1。Windows 已有设备验证基础；新增颜色写入和文字上传尚未实机验证，macOS 版本仍需实机验证。其他型号和固件不会自动写入。"},
+			{"支持范围", "已验证 Halo PixelBar 固件 1.1.1。Windows 原生文字单次写入、全文回读和静态显示已实机确认；连续定时更新及长期稳定性未验证。旧图片文字上传、颜色写入尚未实机验证。macOS 仅交叉编译与包检查，不等于实机兼容。其他型号和固件不会自动写入。"},
 		} {
 			ui.Column(c).Padding(18).Gap(10).Radius(10).Background(surface).Children(func() { ui.Text(c, s.title).Bold(); ui.Text(c, s.body).TextColor(muted) })
 		}
 	})
+}
+
+// Stop scheduling before waiting for an in-flight write; never abort a HID
+// transaction halfway through or allow a close attempt to schedule another one.
+func (a *App) canClose() bool {
+	a.stopLinkage("监控已停止；关闭后不恢复音箱旧内容。")
+	if a.busy || a.processing {
+		a.status = "监控已停止，正在执行的操作需完成后才能关闭，请稍后再次关闭。"
+		return false
+	}
+	if err := a.save(); err != nil {
+		a.failed = true
+		a.status = "配置保存失败，请检查目录权限后再关闭：" + err.Error()
+		return false
+	}
+	return true
 }
 
 func Run(path string) error {
@@ -747,25 +784,22 @@ func Run(path string) error {
 		}
 		a.checkDevice(time.Now())
 		stop := make(chan struct{})
-		a.window.OnClosed(func() { a.closed = true; close(stop) })
+		a.window.OnClosed(func() { a.closed = true; a.stopLinkage(""); close(stop) })
 		go func() {
-			ticker := time.NewTicker(10 * time.Second)
+			ticker := time.NewTicker(250 * time.Millisecond)
 			defer ticker.Stop()
 			for {
 				select {
 				case now := <-ticker.C:
-					a.update(func() { a.pollDevice(now) })
+					a.update(func() { a.pollLinkage(now); a.pollDevice(now) })
 				case <-stop:
 					return
 				}
 			}
 		}()
 		a.window.OnClose(func(e *mygo.CloseEvent) {
-			if a.busy || a.processing {
+			if !a.canClose() {
 				e.PreventDefault()
-				a.status = "正在执行操作，请完成后再关闭。"
-			} else {
-				a.save()
 			}
 		})
 		if path != "" {

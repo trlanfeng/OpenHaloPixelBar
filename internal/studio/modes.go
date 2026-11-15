@@ -15,7 +15,7 @@ import (
 	"openpixelbar/internal/pixelbar"
 )
 
-const imageMode, textMode, colorMode = "图片模式", "文字模式", "颜色设置"
+const imageMode, textMode, colorMode, linkageMode = "图片模式", "文字模式", "颜色设置", "应用联动"
 
 type previewState struct {
 	frames  []pixelbar.Frame
@@ -63,7 +63,7 @@ func (a *App) switchMode(mode string) {
 		state = a.imageState
 	case textMode:
 		state = a.textState
-	case colorMode:
+	case colorMode, linkageMode:
 		state = previewState{}
 	}
 	a.frames, a.delays, a.frame, a.playing = state.frames, state.delays, state.frame, state.playing
@@ -119,7 +119,7 @@ func (a *App) loadFonts() {
 
 func (a *App) textCurrent() bool { return a.textDraft == a.renderedText && len(a.frames) > 0 }
 func (a *App) canSend() bool {
-	return a.mode != colorMode && len(a.frames) > 0 && (a.mode != textMode || a.textCurrent())
+	return a.mode != colorMode && a.mode != linkageMode && len(a.frames) > 0 && (a.mode != textMode || a.textCurrent())
 }
 
 func (a *App) generateText() {
@@ -185,7 +185,7 @@ func (a *App) colorPreviewLabel() string {
 }
 
 func (a *App) writeColor() {
-	if a.busy || a.processing || a.checking || a.closed {
+	if a.busy || a.processing || a.checking || a.closed || a.linkEnabled {
 		return
 	}
 	col := pixelbar.RGB{R: byte(a.red), G: byte(a.green), B: byte(a.blue)}
