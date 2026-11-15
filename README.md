@@ -4,7 +4,7 @@
 
 给花再 **Halo PixelBar** 音箱的屏幕，放上你自己的图片和动画。
 
-OpenHaloPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通过 USB HID 与音箱通信。无需运行 TempoHub，不依赖 Python 或 WebView。当前版本：**v0.4.0 预发布版**。
+OpenHaloPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通过 USB HID 与音箱通信。无需运行 TempoHub，不依赖 Python 或 WebView。当前版本：**v0.4.1 预发布版**。
 
 > **重要免责声明**
 >
@@ -22,26 +22,26 @@ OpenHaloPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具�
 
 上图为当前源码的主界面，展示内置“公路旅行”动画，可在同一窗口选择素材、预览效果、调整图像并导出或发送到音箱。
 
-## 下载 v0.4.0 预发布版
+## 下载 v0.4.1 预发布版
 
 请先阅读上述免责声明。Windows 解压后运行 `OpenHaloPixelBar.exe`，Mac 打开 `OpenHaloPixelBar.app`。Windows 程序未签名；Mac 包仅供实机测试，未完成 Developer ID 签名或 Apple 公证。旧 `OpenPixelBar` / `OpenPB` 配置会按既有顺序迁移读取。
 
 | 平台 | 下载 | 状态 |
 | --- | --- | --- |
-| Windows x64 | [Windows 便携包](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.0/OpenHaloPixelBar-v0.4.0-windows-amd64.zip) | 自动测试与构建通过；新增原生系统托盘交互尚待人工验收 |
-| macOS Apple Silicon | [arm64 测试包](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.0/OpenHaloPixelBar-v0.4.0-macos-arm64.zip) | 仅交叉构建及包检查，尚未实机验证 |
-| macOS Intel | [amd64 测试包](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.0/OpenHaloPixelBar-v0.4.0-macos-amd64.zip) | 仅交叉构建及包检查，尚未实机验证 |
+| Windows x64 | [Windows 便携包](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.1/OpenHaloPixelBar-v0.4.1-windows-amd64.zip) | 自动测试与构建通过；模式恢复及原生系统托盘交互尚待实机验收 |
+| macOS Apple Silicon | [arm64 测试包](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.1/OpenHaloPixelBar-v0.4.1-macos-arm64.zip) | 仅交叉构建及包检查，尚未实机验证 |
+| macOS Intel | [amd64 测试包](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.1/OpenHaloPixelBar-v0.4.1-macos-amd64.zip) | 仅交叉构建及包检查，尚未实机验证 |
 
-[Release 页面](https://github.com/trlanfeng/OpenHaloPixelBar/releases/tag/v0.4.0) · [SHA-256 校验文件](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.0/SHA256SUMS.txt)
+[Release 页面](https://github.com/trlanfeng/OpenHaloPixelBar/releases/tag/v0.4.1) · [SHA-256 校验文件](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.1/SHA256SUMS.txt)
 
-## 当前源码后续改进（尚未发布）
+## v0.4.1 更新说明
 
 - 应用联动首次实际发送前保存音箱显示状态；全部目标退出、手动停止监控或明确退出程序时，等待在途操作完成，恢复本轮联动前的模式并回读确认。其他目标仍运行时沿用原有规则回退。
 - 支持组合 0 的图案场景和原生文字模式，保留独立音乐可视化参数；原为原生文字时一并恢复旧文字及其模式选项。未知模式或不能安全恢复的旧文字会阻止接管，不静默降级。
 - 恢复失败不自动重试，并取消本次退出、显示错误；再次明确退出可直接关闭。恢复快照只保存在当前进程内，强制结束进程、崩溃或断电不能保证恢复。
-- 下文联动行为描述对应当前源码，以上改进不包含在已发布的 v0.4.0 下载包中。新增恢复流程只做自动测试和构建检查，**尚未进行音箱实机恢复及目视验证**。
+- 补齐状态捕获失败、在途退出、快速重启、重复恢复防护、关闭等待及失败提示遮挡等测试；全量测试、静态检查与联动边界重复 10 次通过。新增恢复流程只做自动测试和构建检查，**尚未进行音箱实机恢复及目视验证**。
 
-## v0.4.0 更新说明
+## v0.4.0 历史更新说明
 
 - 项目和程序统一更名为 **OpenHaloPixelBar**，保留旧配置迁移；增加东风 DF4D、海底漫游、山水行舟内置动画。
 - 新增**应用联动**：Windows/macOS 识别运行应用与前台焦点，按应用独立文字列表和间隔循环；直接使用原生 `E8` 文字指令及 `E7` 回读，**不生成图片、不走图片上传**。
@@ -66,7 +66,7 @@ v0.3.0 以旧名称 OpenPixelBar 发布，下方历史截图保留旧名称；�
 
 ## 已测试版本与范围
 
-以下保留 **2026-11-12** 的实际验证记录，并补充 **2026-11-15 / v0.4.0** 的自动测试与构建结果；未测试的部分不作兼容性承诺。
+以下保留 **2026-11-12** 的实际验证记录，并补充 **2026-11-15 / v0.4.0、v0.4.1** 的自动测试与构建结果；未测试的部分不作兼容性承诺。
 
 | 项目 | 版本 / 环境 | 验证情况 |
 | --- | --- | --- |
@@ -76,6 +76,7 @@ v0.3.0 以旧名称 OpenPixelBar 发布，下方历史截图保留旧名称；�
 | Windows | **Windows 11 专业版 x64，10.0.26300 / Build 26300** | 已验证窗口启动、图像预览、应用内弹框、启动检测与每 10 秒检测，以及 Go 版汽车 GIF 上传 |
 | OpenPixelBar（更名前） | **v0.3.0 预发布版** | 协议、图像、文字生成、颜色确认、调色板同步与界面自动测试通过；实机范围见下文 |
 | OpenHaloPixelBar | **v0.4.0 预发布版** | 应用联动、原生文字协议、关闭弹框与偏好、设备互斥和配置自动测试通过；Windows 只读进程识别通过。托盘人工交互、连续轮播和长期运行未验证 |
+| OpenHaloPixelBar | **v0.4.1 预发布版** | 联动状态保存与恢复、退出等待及失败不重试自动测试通过；Windows 构建、Mac 双架构包检查通过。新增恢复流程未实机验证 |
 | macOS Apple Silicon | `arm64` 构建 | **仅交叉编译及应用包检查通过，未在 Mac 实机验证界面或 USB 上传** |
 | macOS Intel | `amd64` 构建 | **仅交叉编译及应用包检查通过，未在 Mac 实机验证界面或 USB 上传** |
 | 其他 Windows / 音箱 / 固件 | — | **未测试** |
@@ -142,7 +143,7 @@ go run ./cmd/generate-themes
 ## 使用方法
 
 1. 通过 USB 连接 Halo PixelBar，切换到声卡输入，退出 TempoHub，避免同时访问设备。
-2. 解压 v0.4.0 下载包后，Windows 双击 `OpenHaloPixelBar.exe`，Mac 打开 `OpenHaloPixelBar.app`。从源码构建的 Windows 程序位于 `dist/OpenHaloPixelBar.exe`。
+2. 解压 v0.4.1 下载包后，Windows 双击 `OpenHaloPixelBar.exe`，Mac 打开 `OpenHaloPixelBar.app`。从源码构建的 Windows 程序位于 `dist/OpenHaloPixelBar.exe`。
 3. 查看顶部设备状态；程序会自动检测，也可以点击“检测连接”。
 4. 点击“导入素材”，阅读格式说明和免责声明，再点击弹框中间的“选择图片或 GIF”。
 5. 调整图案并查看预览；动画可以暂停、逐帧检查和调整速度。
