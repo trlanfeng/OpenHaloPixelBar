@@ -4,7 +4,7 @@
 
 给花再 **Halo PixelBar** 音箱的屏幕，放上你自己的图片和动画。
 
-OpenHaloPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通过 USB HID 与音箱通信。无需运行 TempoHub，不依赖 Python 或 WebView。当前版本：**v0.3.0 预发布版**。
+OpenHaloPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具，通过 USB HID 与音箱通信。无需运行 TempoHub，不依赖 Python 或 WebView。当前版本：**v0.4.0 预发布版**。
 
 > **重要免责声明**
 >
@@ -22,19 +22,30 @@ OpenHaloPixelBar 是使用 **Go + MyGo Native UI** 编写的独立桌面工具�
 
 上图为当前源码的主界面，展示内置“公路旅行”动画，可在同一窗口选择素材、预览效果、调整图像并导出或发送到音箱。
 
-## 下载 v0.3.0 预发布版
+## 下载 v0.4.0 预发布版
 
-v0.3.0 是更名前以 OpenPixelBar 名称发布的历史版本，下载文件、包内程序和下方 v0.3.0 文字／颜色模式截图仍使用旧名称。当前源码及新构建产物使用 OpenHaloPixelBar。请先阅读上述免责声明。解压此 Windows 压缩包后运行 `OpenPixelBar.exe`；Windows 程序未签名，Mac 包仅供实机测试，未完成 Developer ID 签名或 Apple 公证。
+请先阅读上述免责声明。Windows 解压后运行 `OpenHaloPixelBar.exe`，Mac 打开 `OpenHaloPixelBar.app`。Windows 程序未签名；Mac 包仅供实机测试，未完成 Developer ID 签名或 Apple 公证。旧 `OpenPixelBar` / `OpenPB` 配置会按既有顺序迁移读取。
 
 | 平台 | 下载 | 状态 |
 | --- | --- | --- |
-| Windows x64 | [Windows 便携包](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.3.0/OpenPixelBar-v0.3.0-windows-amd64.zip) | 已有 Windows 实测基础；新增功能验证范围见下文 |
-| macOS Apple Silicon | [arm64 测试包](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.3.0/OpenPixelBar-v0.3.0-macos-arm64.zip) | 尚未实机验证 |
-| macOS Intel | [amd64 测试包](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.3.0/OpenPixelBar-v0.3.0-macos-amd64.zip) | 尚未实机验证 |
+| Windows x64 | [Windows 便携包](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.0/OpenHaloPixelBar-v0.4.0-windows-amd64.zip) | 自动测试与构建通过；新增原生系统托盘交互尚待人工验收 |
+| macOS Apple Silicon | [arm64 测试包](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.0/OpenHaloPixelBar-v0.4.0-macos-arm64.zip) | 仅交叉构建及包检查，尚未实机验证 |
+| macOS Intel | [amd64 测试包](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.0/OpenHaloPixelBar-v0.4.0-macos-amd64.zip) | 仅交叉构建及包检查，尚未实机验证 |
 
-[Release 页面](https://github.com/trlanfeng/OpenPixelBar/releases/tag/v0.3.0) · [SHA-256 校验文件](https://github.com/trlanfeng/OpenPixelBar/releases/download/v0.3.0/SHA256SUMS.txt)
+[Release 页面](https://github.com/trlanfeng/OpenHaloPixelBar/releases/tag/v0.4.0) · [SHA-256 校验文件](https://github.com/trlanfeng/OpenHaloPixelBar/releases/download/v0.4.0/SHA256SUMS.txt)
 
-## v0.3.0 更新说明
+## v0.4.0 更新说明
+
+- 项目和程序统一更名为 **OpenHaloPixelBar**，保留旧配置迁移；增加东风 DF4D、海底漫游、山水行舟内置动画。
+- 新增**应用联动**：Windows/macOS 识别运行应用与前台焦点，按应用独立文字列表和间隔循环；直接使用原生 `E8` 文字指令及 `E7` 回读，**不生成图片、不走图片上传**。
+- 实现前台优先、后台继续、多实例退出回退、每条确认后计时和失败暂停；列表不限固定条数，单条限 16 个字符且 UTF-8 ≤ 48 字节。重启后需手动启用监控。
+- 新增 Windows 托盘 / macOS 菜单栏图标与菜单；关闭可选择退出、最小化到托盘或取消，支持“不再询问”和恢复询问。隐藏后继续监控，明确退出等待在途操作完成。
+- 补齐设备互斥、旧回调隔离、配置保存失败及关闭边界测试，新增应用联动和关闭弹框截图。
+- 验证范围：Windows 原生文字**单次**写入、回读和目视确认已有记录；**连续实机轮播、长期稳定性、原生系统托盘交互及所有 macOS 实机行为仍未验证**。发布为预发布版，不作兼容性或安全保证。
+
+## v0.3.0 历史更新说明
+
+v0.3.0 以旧名称 OpenPixelBar 发布，下方历史截图保留旧名称；本节用于保留历史记录，不代表当前下载包。
 
 - 顶部新增图片模式、文字模式和颜色设置标签，切换时保留各自的预览与播放位置。
 - 文字可选择字体、字号、静态或上下／左右移动；生成实际点阵帧后预览、导出或发送。
@@ -48,7 +59,7 @@ v0.3.0 是更名前以 OpenPixelBar 名称发布的历史版本，下载文件�
 
 ## 已测试版本与范围
 
-以下为 **2026-11-12** 的实际验证记录，未测试的部分不作兼容性承诺。
+以下保留 **2026-11-12** 的实际验证记录，并补充 **2026-11-15 / v0.4.0** 的自动测试与构建结果；未测试的部分不作兼容性承诺。
 
 | 项目 | 版本 / 环境 | 验证情况 |
 | --- | --- | --- |
@@ -57,6 +68,7 @@ v0.3.0 是更名前以 OpenPixelBar 名称发布的历史版本，下载文件�
 | USB 设备 | VID `2D99` / PID `A160`；usage page `FF14` | 已验证控制接口，64 字节 HID 报文 |
 | Windows | **Windows 11 专业版 x64，10.0.26300 / Build 26300** | 已验证窗口启动、图像预览、应用内弹框、启动检测与每 10 秒检测，以及 Go 版汽车 GIF 上传 |
 | OpenPixelBar（更名前） | **v0.3.0 预发布版** | 协议、图像、文字生成、颜色确认、调色板同步与界面自动测试通过；实机范围见下文 |
+| OpenHaloPixelBar | **v0.4.0 预发布版** | 应用联动、原生文字协议、关闭弹框与偏好、设备互斥和配置自动测试通过；Windows 只读进程识别通过。托盘人工交互、连续轮播和长期运行未验证 |
 | macOS Apple Silicon | `arm64` 构建 | **仅交叉编译及应用包检查通过，未在 Mac 实机验证界面或 USB 上传** |
 | macOS Intel | `amd64` 构建 | **仅交叉编译及应用包检查通过，未在 Mac 实机验证界面或 USB 上传** |
 | 其他 Windows / 音箱 / 固件 | — | **未测试** |
@@ -73,7 +85,7 @@ v0.3.0 是更名前以 OpenPixelBar 名称发布的历史版本，下载文件�
 
 - 自绘深色标题栏和窗口按钮，支持拖动、最小化、最大化/还原。
 - 顶部“图片模式 / 文字模式 / 颜色设置 / 应用联动”标签；切换标签保留图片和文字各自的预览与播放位置。
-- 应用联动使用设备原生静态文字指令，按运行应用及前台焦点选择独立文字列表和间隔，不生成图片、不走图像上传流程。此功能在当前源码及本地构建中提供，**不包含在历史 v0.3.0 下载包中**。
+- 应用联动使用设备原生静态文字指令，按运行应用及前台焦点选择独立文字列表和间隔，不生成图片、不走图像上传流程。此功能包含在 **v0.4.0** 中，不包含在历史 v0.3.0 下载包中。
 - 文字模式支持选择常用系统字体或载入 TTF / OTF / TTC、8～32 px 字号、静态 / 上下移动 / 左右移动，生成点阵图片后预览、导出和发送。
 - 颜色设置支持调色板、RGB 滑块和常用色，调色板选中色与 RGB 双向同步；启动与每 10 秒检测时读取音箱颜色，同步图片和文字预览。颜色写入后回读核对，确认前不显示成功。
 - 素材列表、连续像素预览、播放/暂停和逐帧查看；内置公路旅行、东风 DF4D、海底漫游、山水行舟四个动画主题。
@@ -123,7 +135,7 @@ go run ./cmd/generate-themes
 ## 使用方法
 
 1. 通过 USB 连接 Halo PixelBar，切换到声卡输入，退出 TempoHub，避免同时访问设备。
-2. 当前源码构建后，Windows 双击 `dist/OpenHaloPixelBar.exe`，Mac 打开 `OpenHaloPixelBar.app`；上述 v0.3.0 历史下载包内仍为 `OpenPixelBar.exe` / `OpenPixelBar.app`。
+2. 解压 v0.4.0 下载包后，Windows 双击 `OpenHaloPixelBar.exe`，Mac 打开 `OpenHaloPixelBar.app`。从源码构建的 Windows 程序位于 `dist/OpenHaloPixelBar.exe`。
 3. 查看顶部设备状态；程序会自动检测，也可以点击“检测连接”。
 4. 点击“导入素材”，阅读格式说明和免责声明，再点击弹框中间的“选择图片或 GIF”。
 5. 调整图案并查看预览；动画可以暂停、逐帧检查和调整速度。
@@ -142,7 +154,7 @@ go run ./cmd/generate-themes
 - 颜色通过独立 RGB 指令设置，回读时同时核对其他屏幕设置未改变；发生错误不自动重试。检测、上传和颜色写入共用任务互斥，避免同时访问 USB。
 - **2026-11-12 验证**：在上述 Windows / Halo PixelBar 固件 1.1.1 环境完成颜色实机读取；文字生成、标签交互、颜色写入确认和失败分支完成自动测试。**新增文字上传和颜色修改尚未进行实机写入与用户目视验证**；Mac 仍仅完成交叉构建与包检查。以上功能已包含在 v0.3.0 预发布包中。
 
-### 应用联动（当前源码新增，未发布新版本）
+### 应用联动（v0.4.0 新增）
 
 ![应用联动：独立应用规则、运行应用选择和原生文字列表](docs/images/openhalopixelbar-linkage.png)
 
@@ -176,9 +188,9 @@ USB 查询、原生文字写入、图案上传和颜色修改共用设备互斥�
 - 本次自动测试覆盖原生文字长度及编码、专用回执、全文/场景/颜色核对、失败不重试、前台切换、后台继续、退出回退、多实例、在途写入、设备互斥、停止与关闭、旧回调隔离、配置保存恢复和界面交互；Windows 本机只读进程快照及当前进程路径匹配通过。
 - 本次 `go test ./... -count=1`、`go vet ./...` 通过；联动与配置迁移测试连续重复 10 次通过，轮播状态机语句覆盖率 100%。原生界面自动测试及截图检查覆盖 1320 × 880 / 1080 × 720、运行应用选择和 120 条文字的增删、排序、保存。
 - Windows x64 构建及版本资源检查通过；macOS arm64 / amd64 交叉构建及 ZIP 检查通过（Mach-O 架构、0755 执行权限、图标、Info.plist、README 一致性）。Windows 未签名，Mac 未完成 Developer ID 签名或 Apple 公证。
-- **连续定时实机更新、长期稳定性、macOS 实机进程/前台识别、界面与 USB 通信均未验证**；自动测试和交叉编译不代表实机兼容。本次没有追加真实 USB 写入，也未发布新版本。
+- **连续定时实机更新、长期稳定性、macOS 实机进程/前台识别、界面与 USB 通信均未验证**；自动测试和交叉编译不代表实机兼容。本次发布准备没有追加真实 USB 写入，已有单次实机记录与自动测试结论分开保留。
 
-### 托盘与关闭行为（当前源码新增）
+### 托盘与关闭行为（v0.4.0 新增）
 
 ![关闭时选择退出或最小化到托盘，并可记住选择](docs/images/openhalopixelbar-close-dialog.png)
 
