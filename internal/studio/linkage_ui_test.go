@@ -11,6 +11,7 @@ import (
 
 	"github.com/egoist/mygo/ui"
 	"openpixelbar/internal/appwatch"
+	"openpixelbar/internal/pixelbar"
 )
 
 type linkageUIHarness struct {
@@ -45,6 +46,8 @@ func newLinkageUI(t *testing.T, width, height int) *linkageUIHarness {
 		h.sent = append(h.sent, text)
 		done(nil)
 	}
+	a.linkSaveDisplay = func(done func(*pixelbar.DisplaySnapshot, error)) { done(&pixelbar.DisplaySnapshot{}, nil) }
+	a.linkRestoreDisplay = func(_ *pixelbar.DisplaySnapshot, done func(error)) { done(nil) }
 	a.probe = func(done func(error)) { done(nil) }
 	h.tester = ui.NewTester(a.View, width, height)
 	a.linkNow = h.tester.Now

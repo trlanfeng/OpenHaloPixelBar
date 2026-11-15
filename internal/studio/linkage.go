@@ -29,6 +29,11 @@ type linkage struct {
 	linkCapture               func(func(appwatch.Snapshot, error))
 	linkSend                  func(string, func(error))
 	linkNow                   func() time.Time
+	linkSaveDisplay           func(func(*pixelbar.DisplaySnapshot, error))
+	linkRestoreDisplay        func(*pixelbar.DisplaySnapshot, func(error))
+	linkPreviousDisplay       *pixelbar.DisplaySnapshot
+	linkRestorePending        bool
+	linkRestoring             bool
 }
 
 func (a *App) initLinkage() {
@@ -40,6 +45,33 @@ func (a *App) initLinkage() {
 		go func() {
 			snapshot, err := appwatch.Capture()
 			a.update(func() { done(snapshot, err) })
+		}()
+	}
+	a.linkSaveDisplay = func(done func(*pixelbar.DisplaySnapshot, error)) {
+		go func() {
+			var snapshot *pixelbar.DisplaySnapshot
+			d, err := pixelbar.Connect()
+			if err == nil {
+				snapshot, err = d.CaptureDisplay()
+				closeErr := d.Close()
+				if err == nil {
+					err = closeErr
+				}
+			}
+			a.update(func() { done(snapshot, err) })
+		}()
+	}
+	a.linkRestoreDisplay = func(snapshot *pixelbar.DisplaySnapshot, done func(error)) {
+		go func() {
+			d, err := pixelbar.Connect()
+			if err == nil {
+				err = d.RestoreDisplay(snapshot)
+				closeErr := d.Close()
+				if err == nil {
+					err = closeErr
+				}
+			}
+			a.update(func() { done(err) })
 		}()
 	}
 	a.linkSend = func(text string, done func(error)) {
@@ -119,7 +151,17 @@ func (a *App) startLinkage(now time.Time) {
 	a.pollLinkage(now)
 }
 
+// stopLinkage is a user-requested stop. Errors use pauseLinkage instead:
+// an uncertain device transaction must not trigger further automatic writes.
 func (a *App) stopLinkage(message string) {
+	a.pauseLinkage(message)
+	if !a.closed {
+		a.linkRestorePending = true
+		a.restoreLinkageDisplay()
+	}
+}
+
+func (a *App) pauseLinkage(message string) {
 	a.linkEnabled = false
 	a.linkGeneration++
 	if a.linkEngine != nil {
@@ -130,20 +172,64 @@ func (a *App) stopLinkage(message string) {
 	}
 }
 
+// Pending restoration survives rule changes and waits for the physical USB
+// operation, not just the logical rotation token. Consume the snapshot before
+// attempting restoration so a failed write can never be retried by a timer.
+func (a *App) restoreLinkageDisplay() {
+	if a.closed || !a.linkRestorePending || a.busy || a.checking || a.processing {
+		return
+	}
+	a.linkRestorePending = false
+	snapshot := a.linkPreviousDisplay
+	if snapshot == nil {
+		return
+	}
+	a.linkPreviousDisplay = nil
+	a.linkGeneration++ // discard process snapshots started before restoration
+	a.linkNextScan = time.Time{}
+	a.busy, a.linkRestoring = true, true
+	a.operation = "正在恢复并核对联动前的音箱模式"
+	a.linkRestoreDisplay(snapshot, func(err error) {
+		a.busy, a.linkRestoring = false, false
+		a.operation = ""
+		if a.closed {
+			return
+		}
+		if err != nil {
+			a.linkRestorePending = false
+			a.pauseLinkage("恢复联动前模式失败，未自动重试，请检查音箱；再次退出将直接关闭：" + err.Error())
+			a.failed = true
+			a.exitPending = false
+			a.help, a.importOpen, a.closePrompt = false, false, false
+			a.restoreWindow()
+			return
+		}
+		a.linkRestorePending = false
+		a.failed = false
+		a.linkMessage = "已确认恢复联动前的音箱模式。"
+		if a.linkEnabled {
+			a.linkMessage += "监控仍启用，等待目标应用。"
+		}
+		a.status = a.linkMessage
+	})
+}
+
 func (a *App) scanLinkage(now time.Time) {
-	if a.closed || a.linkScanning || a.linkCapture == nil {
+	if a.closed || a.linkRestoring || a.linkScanning || a.linkCapture == nil {
 		return
 	}
 	a.linkScanning = true
 	generation := a.linkGeneration
 	a.linkCapture(func(snapshot appwatch.Snapshot, err error) {
 		a.linkScanning = false
-		if a.closed || generation != a.linkGeneration {
+		if a.closed || a.linkRestoring || generation != a.linkGeneration {
 			return
 		}
 		a.linkNextScan = a.linkNow().Add(2 * time.Second)
 		if err != nil {
-			a.stopLinkage("应用检测失败，监控已暂停：" + err.Error())
+			// A read-only application refresh must not cancel an explicit stop
+			// already waiting for another device operation to finish.
+			a.pauseLinkage("应用检测失败，监控已暂停：" + err.Error())
 			a.failed = true
 			return
 		}
@@ -165,7 +251,8 @@ func (a *App) scanLinkage(now time.Time) {
 		}
 		a.linkEngine.Observe(a.options.AppRules, snapshot)
 		if a.linkEngine.Active() < 0 {
-			a.linkMessage = "监控中：等待目标应用运行；音箱保留最后内容。"
+			a.linkMessage = "监控中：等待目标应用运行；已接管的音箱将恢复联动前模式。"
+			a.linkRestorePending = true
 		} else {
 			a.linkMessage = "监控中：" + a.options.AppRules[a.linkEngine.Active()].Name + "（前台优先）"
 		}
@@ -174,6 +261,7 @@ func (a *App) scanLinkage(now time.Time) {
 }
 
 func (a *App) pollLinkage(now time.Time) {
+	a.restoreLinkageDisplay()
 	if a.closed || !a.linkEnabled {
 		return
 	}
@@ -187,7 +275,38 @@ func (a *App) pollLinkage(now time.Time) {
 }
 
 func (a *App) dispatchLinkage(now time.Time) {
-	if a.closed || !a.linkEnabled || a.linkScanning || a.busy || a.processing || a.checking || a.linkSend == nil {
+	a.restoreLinkageDisplay()
+	if a.closed || !a.linkEnabled || a.linkRestorePending || a.linkScanning || a.busy || a.processing || a.checking || a.linkSend == nil {
+		return
+	}
+	if a.linkEngine.Active() < 0 {
+		return
+	}
+	if a.linkPreviousDisplay == nil {
+		generation := a.linkGeneration
+		a.busy = true
+		a.operation = "正在保存联动前的音箱模式"
+		a.linkSaveDisplay(func(snapshot *pixelbar.DisplaySnapshot, err error) {
+			a.busy = false
+			a.operation = ""
+			if a.closed {
+				return
+			}
+			if err != nil || snapshot == nil {
+				a.linkRestorePending = false
+				a.pauseLinkage(fmt.Sprintf("无法保存联动前模式，未发送联动文字：%v", err))
+				a.failed = true
+				return
+			}
+			// Capture is read-only. If stopped or all targets exited during it,
+			// nothing was taken over and no restoration write is needed.
+			if generation != a.linkGeneration || !a.linkEnabled || a.linkEngine.Active() < 0 || a.linkRestorePending {
+				a.linkRestorePending = false
+				return
+			}
+			a.linkPreviousDisplay = snapshot
+			a.dispatchLinkage(a.linkNow())
+		})
 		return
 	}
 	req, ok := a.linkEngine.Next(now)
@@ -208,24 +327,26 @@ func (a *App) dispatchLinkage(now time.Time) {
 		if err == nil {
 			a.linkLastText = req.Text
 		}
-		if generation != a.linkGeneration {
-			if err != nil {
-				a.failed = true
-				a.status = "停止前的文字写入未获完整确认：" + err.Error()
-				a.linkMessage = a.status
+		if err != nil {
+			a.linkRestorePending = false
+			a.pauseLinkage("文字设置失败，监控已暂停；不会自动重试。可手动停止监控以恢复原模式：" + err.Error())
+			a.failed = true
+			if a.exitPending {
+				a.exitPending = false
+				a.restoreWindow()
 			}
 			return
 		}
-		accepted := a.linkEngine.Complete(req.Token, a.linkNow(), err)
-		if err != nil {
-			a.stopLinkage("文字设置失败，监控已暂停；不会自动重试：" + err.Error())
-			a.failed = true
+		if generation != a.linkGeneration {
+			a.restoreLinkageDisplay()
 			return
 		}
+		accepted := a.linkEngine.Complete(req.Token, a.linkNow(), nil)
 		if accepted {
 			a.failed = false
 			a.status = fmt.Sprintf("已确认原生文字：%s · 第 %d 条", req.Text, req.TextIndex+1)
 		}
+		a.restoreLinkageDisplay()
 	})
 }
 
@@ -268,7 +389,7 @@ func (a *App) linkageEditor(c *ui.Context) {
 	})
 	ui.Scroll(c).Grow(1).MinWidth(0).Padding(22).Gap(12).Children(func() {
 		ui.Text(c, "应用联动 · 原生文字").FontSize(24).Bold()
-		ui.Text(c, "前台应用优先；切到未配置应用继续上一条规则。目标全部退出后停止，保留最后文字。").TextColor(muted)
+		ui.Text(c, "前台应用优先；切到未配置应用继续上一条规则。目标全部退出后，恢复联动前的音箱模式。").TextColor(muted)
 		ui.Column(c).Padding(14).Gap(7).Background(surface).Radius(9).Children(func() {
 			ui.Text(c, a.linkMessage).TextColor(accent)
 			last := a.linkLastText
@@ -320,7 +441,7 @@ func (a *App) linkageEditor(c *ui.Context) {
 		} else {
 			ui.Text(c, "点击左侧“添加应用规则”，设置要监控的应用和文字列表。").Padding(20).TextColor(muted)
 		}
-		ui.Text(c, "监控每约 2 秒检查一次；最小化到托盘继续监控，明确退出后停止，重启不自动写入。监控期间禁止手动发送图案或修改颜色，需先停止监控。").FontSize(11).TextColor(muted)
+		ui.Text(c, "监控每约 2 秒检查一次；最小化到托盘继续监控。目标全部退出、手动停止或退出程序时恢复联动前模式；重启不自动写入。监控期间禁止手动发送图案或修改颜色，需先停止监控。").FontSize(11).TextColor(muted)
 		ui.Text(c, "启用将替换音箱保存的文字与当前显示模式。macOS 前台识别尚未实机验证；检测或写入失败会暂停，需手动重新启用。").FontSize(11).TextColor(muted)
 	})
 }

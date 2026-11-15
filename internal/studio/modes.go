@@ -185,7 +185,7 @@ func (a *App) colorPreviewLabel() string {
 }
 
 func (a *App) writeColor() {
-	if a.busy || a.processing || a.exitPending || a.checking || a.closed || a.linkEnabled {
+	if a.busy || a.processing || a.exitPending || a.checking || a.closed || a.linkEnabled || a.linkPreviousDisplay != nil || a.linkRestorePending {
 		return
 	}
 	col := pixelbar.RGB{R: byte(a.red), G: byte(a.green), B: byte(a.blue)}

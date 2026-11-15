@@ -283,7 +283,7 @@ func (a *App) connect(upload bool) {
 		a.checkDevice(time.Now())
 		return
 	}
-	if a.busy || a.processing || a.exitPending || a.checking || a.linkEnabled || !a.canSend() {
+	if a.busy || a.processing || a.exitPending || a.checking || a.linkEnabled || a.linkPreviousDisplay != nil || a.linkRestorePending || !a.canSend() {
 		return
 	}
 	a.busy = true
@@ -709,16 +709,16 @@ func (a *App) footer(c *ui.Context) {
 					hint = "应用颜色会修改音箱像素屏 RGB；回读确认后同步预览。"
 				}
 				if a.mode == linkageMode || a.linkEnabled {
-					hint = "原生文字直接设置；停止后保留最后内容。在途写入完成后停止，无自动重试。"
+					hint = "原生文字直接设置；停止后恢复联动前模式。等待在途操作完成，无自动重试。"
 				}
 				ui.Text(c, hint).FontSize(11).TextColor(muted)
 			}
 		})
 		if a.exitPending {
 			ui.Text(c, "正在等待操作完成后退出…").TextColor(accent)
-		} else if a.linkEnabled {
+		} else if a.linkEnabled || a.linkPreviousDisplay != nil {
 			if ui.Button(c, "停止应用监控").Padding(13, 20).Clicked() {
-				a.stopLinkage("已停止监控，保留音箱最后内容。")
+				a.stopLinkage("已停止监控，将在当前操作完成后恢复联动前模式。")
 			}
 		} else if a.mode == linkageMode {
 			if ui.PrimaryButton(c, "启用应用监控").Padding(13, 20).Disabled(a.busy || a.processing || a.checking || a.linkScanning).Clicked() {
@@ -746,8 +746,8 @@ func (a *App) helpView(c *ui.Context) {
 			{"03  文字模式", "输入单行文字，选择字体和字号，设置静态、上下或左右移动，点击生成预览。动画生成 8 帧，预览与发送共用同一组图片；修改参数后需重新生成。"},
 			{"04  颜色设置", "连接后自动读取像素屏 RGB，图片与文字共用该颜色。调整滑块后点击应用颜色到音箱，等待回读确认；草稿不影响图案预览，黑色会让点阵不可见。"},
 			{"05  应用联动（原生文字）", "每个应用配置独立文字列表和 1～86400 秒间隔；每行一条，增删或移动行即可编辑顺序，列表无固定条数上限。单条最多 16 字且 UTF-8 不超过 48 字节。直接使用音箱原生静态文字指令，不生成图片，不使用图片上传流程。"},
-			{"06  联动优先级与启停", "手动启用监控后，已运行的目标应用立即参与轮播；前台已配置应用优先，其他前台保持当前规则。最后一个实例退出时回退到最近获得焦点且仍运行的规则，无历史按列表顺序。切换规则从第一条开始，同规则失焦不重置。全部退出停止轮播并保留最后文字，监控仍等待目标重新启动。"},
-			{"07  联动安全边界", "每条文字写入并全文回读确认后开始计时，失败暂停且不自动重试。停止或退出时不取消在途写入，退出会等待操作完成；隐藏到托盘继续监控，不恢复旧内容。监控期间禁止手动上传及颜色写入。保存配置后重启仍需手动启用，程序需保持运行。"},
+			{"06  联动优先级与启停", "手动启用监控后，已运行的目标应用立即参与轮播；前台已配置应用优先，其他前台保持当前规则。最后一个实例退出时回退到最近获得焦点且仍运行的规则，无历史按列表顺序。切换规则从第一条开始，同规则失焦不重置。全部退出停止轮播并恢复本轮联动前的音箱模式，监控仍等待目标重新启动。"},
+			{"07  联动安全边界", "每条文字写入并全文回读确认后开始计时，失败暂停且不自动重试。首次发送前保存音箱模式；手动停止或明确退出会等待在途写入完成，再恢复并回读核对。恢复失败提示且不重试，退出流程取消，再次退出可直接关闭。隐藏到托盘继续监控，不触发恢复。监控期间禁止手动上传及颜色写入。保存配置后重启仍需手动启用，程序需保持运行。"},
 			{"08  预览与发送", "GIF 最多支持 8 帧。可暂停、逐帧查看和调整速度。点击发送到音箱，等待设备确认完成。"},
 			{"素材与隐私", "软件不上传图片到网络。素材库记录文件路径，原文件移动或删除后需重新导入。导出会保存处理后的 PNG 或循环 GIF。"},
 			{"支持范围", "已验证 Halo PixelBar 固件 1.1.1。Windows 原生文字单次写入、全文回读和静态显示已实机确认；连续定时更新及长期稳定性未验证。旧图片文字上传、颜色写入尚未实机验证。macOS 仅交叉编译与包检查，不等于实机兼容。其他型号和固件不会自动写入。"},
@@ -760,8 +760,8 @@ func (a *App) helpView(c *ui.Context) {
 // Stop scheduling before waiting for an in-flight write; never abort a HID
 // transaction halfway through or allow a close attempt to schedule another one.
 func (a *App) canClose() bool {
-	a.stopLinkage("监控已停止；关闭后不恢复音箱旧内容。")
-	if a.busy || a.processing {
+	a.stopLinkage("监控已停止；正在恢复联动前模式后关闭。")
+	if a.busy || a.processing || a.checking || a.linkScanning || a.linkRestorePending {
 		a.status = "监控已停止，正在执行的操作需完成后才能关闭，请稍后再次关闭。"
 		return false
 	}

@@ -72,7 +72,7 @@ func (a *App) trayMenuItems() []*mygo.MenuItem {
 			a.startLinkage(time.Now())
 		})},
 		{Label: "停止应用监控", Click: action(func() {
-			a.stopLinkage("已从托盘停止监控，保留音箱最后内容。")
+			a.stopLinkage("已从托盘停止监控，将恢复联动前的音箱模式。")
 		})},
 		mygo.Separator(),
 		{Label: "恢复关闭时询问", Click: action(func() { a.restoreWindow(); a.resetClosePreference() })},
@@ -172,7 +172,9 @@ func (a *App) pollExit() {
 	if !a.exitPending || a.closed || a.exitApproved {
 		return
 	}
-	if a.busy || a.processing || a.checking || a.linkScanning {
+	a.restoreLinkageDisplay()
+	// A synchronous test completion or a failed restore can cancel exit here.
+	if !a.exitPending || a.busy || a.processing || a.checking || a.linkScanning || a.linkRestorePending {
 		return
 	}
 	if !a.canClose() {
@@ -193,7 +195,7 @@ func (a *App) closeDialog(c *ui.Context) {
 		ui.Text(c, "关闭程序").FontSize(23).Bold()
 		ui.Text(c, "选择退出程序，还是最小化到托盘？").FontSize(16)
 		ui.Text(c, "最小化到托盘：隐藏窗口，应用监控与后台任务继续运行。可从 Windows 托盘或 macOS 菜单栏图标恢复窗口。").TextColor(muted)
-		ui.Text(c, "退出程序：停止监控，等待当前操作完成后退出；音箱保留最后内容。").TextColor(muted)
+		ui.Text(c, "退出程序：停止监控，等待当前操作完成并恢复联动前模式后退出；恢复失败会保留窗口提示。").TextColor(muted)
 		ui.Checkbox(c, &a.rememberClose, "不再询问，记住本次选择").Label("不再询问")
 		ui.Text(c, "可通过托盘菜单或“使用说明”恢复关闭时询问；不影响重启后需手动启用监控。").FontSize(11).TextColor(muted)
 		if a.closeError != "" {
